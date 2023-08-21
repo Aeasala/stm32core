@@ -216,6 +216,10 @@ clean:
 	@$(RM) $(BIN)/$(EXE)
 	@$(RM) $(BIN)/$(EXE).elf
 	@$(RM) $(BIN)/$(EXE).map
+	@$(RM) $(BIN)/$(EXE).bin
+	@$(RM) $(BIN)/$(EXE).hex
+	@$(RM) $(BIN)/$(EXE).lst
+	
 
 # remove everything except source
 .PHONY: reset
