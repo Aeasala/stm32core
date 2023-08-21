@@ -3,14 +3,21 @@
 
 # A generic build template for C/C++ programs
 
-# executable name: default is containing folder's name.
-SRCS = src/main.c src/system_stm32f0xx.c
+####################################################################################
+####################################################################################
 
+# executable name: default is containing folder's name.
 EXE = $(shell basename $(CURDIR))
-BSP=BSP
+
+# BSP and provided linker scripts
+BSP=bsp
 STD_PERIPH_LIB=$(BSP)
 LDSCRIPT_INC=dev/ldscripts
 
+####################################################################################
+####################################################################################
+
+# ARM-specific compilers and utilities
 GCC_BASE = C:/ARM/12_3_rel1/bin
 # C compiler
 CC = "$(GCC_BASE)/arm-none-eabi-gcc.exe"
@@ -18,7 +25,6 @@ CC = "$(GCC_BASE)/arm-none-eabi-gcc.exe"
 CXX = "$(GCC_BASE)/arm-none-eabi-g++.exe"
 # linker
 LD = "$(GCC_BASE)/arm-none-eabi-g++.exe"
-
 #other utils
 OBJCOPY="$(GCC_BASE)/arm-none-eabi-objcopy.exe"
 OBJDUMP="$(GCC_BASE)/arm-none-eabi-objdump.exe"
@@ -32,10 +38,12 @@ SIZE="$(GCC_BASE)/arm-none-eabi-size.exe"
 CFLAGS  = -Wall -g -std=c99 -Os  
 CFLAGS += $(CFLAGS_TARG)
 CFLAGS += -ffunction-sections -fdata-sections
-CFLAGS += -Wl,--gc-sections -Wl,-Map=$(BIN)/$(EXE).map
+CFLAGS += -Wl,--gc-sections -lm -Wl,-Map=$(BIN)/$(EXE).map -lm -Wl,--cref
 
-##########################################
+####################################################################################
+####################################################################################
 
+# dependencies and includes
 vpath %.c src
 vpath %.a $(STD_PERIPH_LIB)
 
@@ -45,13 +53,15 @@ CFLAGS += -I inc -I $(STD_PERIPH_LIB) -I $(STD_PERIPH_LIB)/CMSIS/Device/ST/STM32
 CFLAGS += -I $(STD_PERIPH_LIB)/CMSIS/Include -I $(STD_PERIPH_LIB)/STM32F0xx_StdPeriph_Driver/inc
 FLAGS += -include $(STD_PERIPH_LIB)/stm32f0xx_conf.h
 
-# build directories
+####################################################################################
+####################################################################################
+
+# build directories and eventual item goals
 BIN = bin
 OBJ = obj
 SRC = src
 
 SOURCES := $(wildcard dev/*.s $(SRC)/*.c $(SRC)/*.cc $(SRC)/*.cpp $(SRC)/*.cxx)
-$(info {$(SOURCES)})
 
 OBJECTS := \
 	$(patsubst dev/%.s,$(OBJ)/%.o,$(wildcard dev/*.s)) \
@@ -59,12 +69,14 @@ OBJECTS := \
 	$(patsubst $(SRC)/%.cc,$(OBJ)/%.o,$(wildcard $(SRC)/*.cc)) \
 	$(patsubst $(SRC)/%.cpp,$(OBJ)/%.o,$(wildcard $(SRC)/*.cpp)) \
 	$(patsubst $(SRC)/%.cxx,$(OBJ)/%.o,$(wildcard $(SRC)/*.cxx))
-$(info {$(OBJECTS)})
 
 # dependency-generation flags
 DEPFLAGS = -MM -MG -MT
 
-# primary linker flags
+####################################################################################
+####################################################################################
+
+# primary linker flags -- do we need a specific entry point?
 # win
 ifeq ($(shell uname -a | grep -ic CYGWIN_NT), 1)
 LDFLAGS +=
@@ -88,10 +100,8 @@ LDFLAGS +=
 -include libs.mk
 LDLIBS = $(LIBADD)
 
-# build directories
-BIN = bin
-OBJ = obj
-SRC = src
+####################################################################################
+####################################################################################
 	
 # TODO
 #-include $(SRC)/subdir.mk
@@ -104,40 +114,38 @@ DEPEND.cxx = $(CXX) $(CFLAGS) $(DEPFLAGS) $(@:.d=.o) $(@:.d=.cpp)
 
 
 # compile C source
-COMPILE.c = $(CC) $(CFLAGS) -c -o $@ -L$(STD_PERIPH_LIB) -lstm32f0 -L$(LDSCRIPT_INC) -Tstm32f0.ld
+COMPILE.c = $(CC) $(CFLAGS) -c -o $@ -L$(STD_PERIPH_LIB) -lstm32f0 -L$(LDSCRIPT_INC)
 # compile C++ source
 COMPILE.cxx = $(CXX) $(CXXFLAGS) $(CPPFLAGS) -c -o $@ -L$(STD_PERIPH_LIB) -lstm32f0 -L$(LDSCRIPT_INC) -Tstm32f0.ld
 # link objects
-LINK.o = $(LD) $(CFLAGS) $(LDFLAGS) $(OBJECTS) -o $@ $(LDLIBS)
+LINK.o = $(LD) $(CFLAGS) -o $@ -L$(STD_PERIPH_LIB) -lstm32f0 -L$(LDSCRIPT_INC) -Tstm32f0.ld $(LDLIBS)
 
 .DEFAULT_GOAL = all
 
 .PHONY: dev/libstm32f0.a all nomap
 all nomap: $(BIN)/$(EXE).elf
-	
-	
-dev/libstm32f0.a: 
+dev/libstm32f0.a: lib
+
+lib:
 	$(MAKE) -C $(STD_PERIPH_LIB)
 
 $(BIN)/$(EXE).elf: $(OBJECTS)
-	
-	$(CC) $(CFLAGS) $(SOURCES) -o $@ -L$(STD_PERIPH_LIB) -lstm32f0 -L$(LDSCRIPT_INC) -Tstm32f0.ld
+	$(info Linking target $@ from $<)
+	$(LINK.o) $(OBJECTS)
 	$(OBJCOPY) -O ihex $(BIN)/$(EXE).elf $(BIN)/$(EXE).hex
 	$(OBJCOPY) -O binary $(BIN)/$(EXE).elf $(BIN)/$(EXE).bin
 	$(OBJDUMP) -St $(BIN)/$(EXE).elf >$(BIN)/$(EXE).lst
 	$(SIZE) $(BIN)/$(EXE).elf
 
-	$(info Linking target $@ from $<)
-
-SRC:
+$(SRC):
 	$(info ./$(SRC) directory not found, creating ./$(SRC))
 	@mkdir -p $(SRC)
 
-OBJ:
+$(OBJ):
 	$(info ./$(OBJ) directory not found, creating ./$(OBJ))
 	@mkdir -p $(OBJ)
 
-BIN:
+$(BIN):
 	$(info ./$(BIN) directory not found, creating ./$(BIN))
 	@mkdir -p $(BIN)
 
