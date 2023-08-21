@@ -9,7 +9,7 @@ SRCS = src/main.c src/system_stm32f0xx.c
 EXE = $(shell basename $(CURDIR))
 BSP=BSP
 STD_PERIPH_LIB=$(BSP)
-LDSCRIPT_INC=Device/ldscripts
+LDSCRIPT_INC=dev/ldscripts
 
 GCC_BASE = C:/ARM/12_3_rel1/bin
 # C compiler
@@ -43,10 +43,23 @@ ROOT=$(shell pwd)
 
 CFLAGS += -I inc -I $(STD_PERIPH_LIB) -I $(STD_PERIPH_LIB)/CMSIS/Device/ST/STM32F0xx/Include
 CFLAGS += -I $(STD_PERIPH_LIB)/CMSIS/Include -I $(STD_PERIPH_LIB)/STM32F0xx_StdPeriph_Driver/inc
-CFLAGS += -include $(STD_PERIPH_LIB)/stm32f0xx_conf.h
+FLAGS += -include $(STD_PERIPH_LIB)/stm32f0xx_conf.h
 
-SRCS += Device/startup_stm32f0xx.s # add startup file to build
-OBJS = $(SRCS:.c=.o)
+# build directories
+BIN = bin
+OBJ = obj
+SRC = src
+
+SOURCES := $(wildcard dev/*.s $(SRC)/*.c $(SRC)/*.cc $(SRC)/*.cpp $(SRC)/*.cxx)
+$(info {$(SOURCES)})
+
+OBJECTS := \
+	$(patsubst dev/%.s,$(OBJ)/%.o,$(wildcard dev/*.s)) \
+	$(patsubst $(SRC)/%.c,$(OBJ)/%.o,$(wildcard $(SRC)/*.c)) \
+	$(patsubst $(SRC)/%.cc,$(OBJ)/%.o,$(wildcard $(SRC)/*.cc)) \
+	$(patsubst $(SRC)/%.cpp,$(OBJ)/%.o,$(wildcard $(SRC)/*.cpp)) \
+	$(patsubst $(SRC)/%.cxx,$(OBJ)/%.o,$(wildcard $(SRC)/*.cxx))
+$(info {$(OBJECTS)})
 
 # dependency-generation flags
 DEPFLAGS = -MM -MG -MT
@@ -80,36 +93,35 @@ BIN = bin
 OBJ = obj
 SRC = src
 	
-
-
 # TODO
 #-include $(SRC)/subdir.mk
 	
 # include compiler-generated dependency rules
 #  | sed "s,\(\)\.o[ :]*,\1.o $@ $(@:.d=.pp) $(@:.d=.su) : ,g"
 DEPENDS := $(OBJECTS:.o=.d)
-DEPEND.c = $(CC) $(DEPFLAGS) $(@:.d=.o) $(@:.d=.c) 
-DEPEND.cxx = $(CXX) $(DEPFLAGS) $(@:.d=.o) $(@:.d=.cpp) 
+DEPEND.c = $(CC) $(CFLAGS) $(DEPFLAGS) $(@:.d=.o) $(@:.d=.c) 
+DEPEND.cxx = $(CXX) $(CFLAGS) $(DEPFLAGS) $(@:.d=.o) $(@:.d=.cpp) 
 
 
 # compile C source
-COMPILE.c = $(CC) $(CFLAGS) $(CPPFLAGS) -c -o $@ -L$(STD_PERIPH_LIB) -lstm32f0 -L$(LDSCRIPT_INC) -Tstm32f0.ld
+COMPILE.c = $(CC) $(CFLAGS) -c -o $@ -L$(STD_PERIPH_LIB) -lstm32f0 -L$(LDSCRIPT_INC) -Tstm32f0.ld
 # compile C++ source
 COMPILE.cxx = $(CXX) $(CXXFLAGS) $(CPPFLAGS) -c -o $@ -L$(STD_PERIPH_LIB) -lstm32f0 -L$(LDSCRIPT_INC) -Tstm32f0.ld
 # link objects
-LINK.o = $(LD) $(LDFLAGS) $(OBJECTS) -o $@ $(LDLIBS)
+LINK.o = $(LD) $(CFLAGS) $(LDFLAGS) $(OBJECTS) -o $@ $(LDLIBS)
 
 .DEFAULT_GOAL = all
 
-.PHONY: lib all nomap
-all nomap: lib $(BIN)/$(EXE).elf 
+.PHONY: dev/libstm32f0.a all nomap
+all nomap: $(BIN)/$(EXE).elf
 	
 	
-lib:
+dev/libstm32f0.a: 
 	$(MAKE) -C $(STD_PERIPH_LIB)
 
-$(BIN)/$(EXE).elf: $(SRCS)
-	$(CC) $(CFLAGS) $^ -o $@ -L$(STD_PERIPH_LIB) -lstm32f0 -L$(LDSCRIPT_INC) -Tstm32f0.ld
+$(BIN)/$(EXE).elf: $(OBJECTS)
+	
+	$(CC) $(CFLAGS) $(SOURCES) -o $@ -L$(STD_PERIPH_LIB) -lstm32f0 -L$(LDSCRIPT_INC) -Tstm32f0.ld
 	$(OBJCOPY) -O ihex $(BIN)/$(EXE).elf $(BIN)/$(EXE).hex
 	$(OBJCOPY) -O binary $(BIN)/$(EXE).elf $(BIN)/$(EXE).bin
 	$(OBJDUMP) -St $(BIN)/$(EXE).elf >$(BIN)/$(EXE).lst
@@ -117,17 +129,63 @@ $(BIN)/$(EXE).elf: $(SRCS)
 
 	$(info Linking target $@ from $<)
 
-$(SRC):
+SRC:
 	$(info ./$(SRC) directory not found, creating ./$(SRC))
 	@mkdir -p $(SRC)
 
-$(OBJ):
+OBJ:
 	$(info ./$(OBJ) directory not found, creating ./$(OBJ))
 	@mkdir -p $(OBJ)
 
-$(BIN):
+BIN:
 	$(info ./$(BIN) directory not found, creating ./$(BIN))
 	@mkdir -p $(BIN)
+
+$(OBJ)/%.d:	dev/%.s
+	$(info Rebuilding dependencies for $(@:.d=.s))
+	@$(DEPEND.c) $< > $@
+
+$(OBJ)/%.d:	$(SRC)/%.c
+	$(info Rebuilding dependencies for $(@:.d=.c))
+	@$(DEPEND.c) $< > $@
+
+$(OBJ)/%.d:	$(SRC)/%.cc
+	$(info Rebuilding dependencies for $(@:.d=.cc))
+	@$(DEPEND.cxx) $< > $@
+
+$(OBJ)/%.d:	$(SRC)/%.cpp
+	$(info Rebuilding dependencies for $(@:.d=.cpp))
+	@$(DEPEND.cxx) $< > $@
+
+$(OBJ)/%.d:	$(SRC)/%.cxx
+	$(info Rebuilding dependencies for $(@:.d=.cxx))
+	@$(DEPEND.cxx) $< > $@
+
+
+$(OBJ)/%.o: dev/%.s
+	$(info Compiling assembly file)
+	$(info ..... ./$(@:.o=.s) ==> ./$(@))
+	@$(COMPILE.c) $< 
+
+$(OBJ)/%.o:	$(SRC)/%.c
+	$(info Compiling source file)
+	$(info ..... ./$(@:.o=.c) ==> ./$(@))
+	@$(COMPILE.c) $< 
+
+$(OBJ)/%.o:	$(SRC)/%.cc
+	$(info Compiling source file)
+	$(info ..... ./$(@:.o=.cc) ==> ./$(@))
+	@$(COMPILE.cxx) $<
+
+$(OBJ)/%.o:	$(SRC)/%.cpp
+	$(info Compiling source file)
+	$(info ..... ./$(@:.o=.cpp) ==> ./$(@))
+	@$(COMPILE.cxx) $<
+
+$(OBJ)/%.o:	$(SRC)/%.cxx
+	$(info Compiling source file)
+	$(info ..... ./$(@:.o=.cxx) ==> ./$(@))
+	@$(COMPILE.cxx) $<
 
 
 # force rebuild
