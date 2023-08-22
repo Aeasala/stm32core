@@ -63,13 +63,17 @@ OBJ = obj
 SRC = src
 
 SOURCES := $(wildcard $(SRC)/dev/*.s $(SRC)/*.c $(SRC)/*.cc $(SRC)/*.cpp $(SRC)/*.cxx)
-
 OBJECTS := \
 	$(patsubst $(SRC)/dev/%.s,$(SRC)/dev/%.o,$(wildcard $(SRC)/dev/*.s)) \
 	$(patsubst $(SRC)/%.c,$(SRC)/%.o,$(wildcard $(SRC)/*.c)) \
 	$(patsubst $(SRC)/%.cc,$(SRC)/%.o,$(wildcard $(SRC)/*.cc)) \
 	$(patsubst $(SRC)/%.cpp,$(SRC)/%.o,$(wildcard $(SRC)/*.cpp)) \
 	$(patsubst $(SRC)/%.cxx,$(SRC)/%.o,$(wildcard $(SRC)/*.cxx))
+
+-include $(SRC)/subdir.mk
+
+
+
 # dependency-generation flags
 DEPFLAGS = -MM -MG -MT
 

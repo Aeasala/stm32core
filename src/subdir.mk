@@ -1,10 +1,7 @@
-#TODO
-OBJECTS := \
-	$(patsubst $(SRC)/%.c, $(OBJ)/%.o, $(wildcard $(SRC)/*.c)) \
-	$(patsubst $(SRC)/%.cc, $(OBJ)/%.o, $(wildcard $(SRC)/*.cc)) \
-	$(patsubst $(SRC)/%.cpp, $(OBJ)/%.o, $(wildcard $(SRC)/*.cpp)) \
-	$(patsubst $(SRC)/%.cxx, $(OBJ)/%.o, $(wildcard $(SRC)/*.cxx))
+# Include (all of) the source files of another subdirectory(ies).
+#Utilize subdirTemplate
 
-# ** wildcard works to any depth?
-	
-SOURCES += $(wildcard **/*.c **/*.cc **/*.cpp **/*.cxx)
+# notation: when a makefile is included, it will (1) appear at the end of $(MAKEFILE_LIST), and (2) run.  convenient!
+thisDir = $(dir $(lastword $(MAKEFILE_LIST)))
+
+#-include $(thisDir){folder name goes here}/subdir.mk
