@@ -18,18 +18,16 @@ LDSCRIPT_INC=$(SRC)/dev/ldscripts
 ####################################################################################
 ####################################################################################
 
-# ARM-specific compilers and utilities
-GCC_BASE = C:/ARM/12_3_rel1/bin
 # C compiler
-CC = "$(GCC_BASE)/arm-none-eabi-gcc.exe"
+CC = arm-none-eabi-gcc
 # C++ compiler
-CXX = "$(GCC_BASE)/arm-none-eabi-g++.exe"
+CXX = arm-none-eabi-g++
 # linker
-LD = "$(GCC_BASE)/arm-none-eabi-g++.exe"
+LD = arm-none-eabi-g++
 #other utils
-OBJCOPY="$(GCC_BASE)/arm-none-eabi-objcopy.exe"
-OBJDUMP="$(GCC_BASE)/arm-none-eabi-objdump.exe"
-SIZE="$(GCC_BASE)/arm-none-eabi-size.exe"
+OBJCOPY=arm-none-eabi-objcopy
+OBJDUMP=arm-none-eabi-objdump
+SIZE=arm-none-eabi-size
 
 
 # get target-specific flags
