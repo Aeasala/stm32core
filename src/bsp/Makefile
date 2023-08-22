@@ -31,4 +31,7 @@ libstm32f0.a: $(OBJS)
 	$(AR) -r $@ $(OBJS)
 
 clean:
+	rm -f $(OBJS)
+
+cleanTrue:
 	rm -f $(OBJS) libstm32f0.a
