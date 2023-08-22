@@ -35,7 +35,7 @@ SIZE="$(GCC_BASE)/arm-none-eabi-size.exe"
 # get target-specific flags
 -include targets.mk
 
-# C flags
+# C flags. CFLAGS_TARG is chip-specific to the STM32.
 CFLAGS  = -Wall -g -std=c99 -Os  
 CFLAGS += $(CFLAGS_TARG)
 CFLAGS += -ffunction-sections -fdata-sections
@@ -44,12 +44,13 @@ CFLAGS += -Wl,--gc-sections
 ####################################################################################
 ####################################################################################
 
-# dependencies and includes
+# dependencies and includes.  may remove
 vpath %.c src
 vpath %.a $(STD_PERIPH_LIB)
 
 ROOT=$(shell pwd)
 
+# keep these as is.
 CFLAGS += -I inc -I$(STD_PERIPH_LIB) -I $(STD_PERIPH_LIB)/CMSIS/Device/ST/STM32F0xx/Include
 CFLAGS += -I $(STD_PERIPH_LIB)/CMSIS/Include -I $(STD_PERIPH_LIB)/STM32F0xx_StdPeriph_Driver/inc
 FLAGS += -include $(STD_PERIPH_LIB)/stm32f0xx_conf.h
@@ -70,12 +71,8 @@ OBJECTS := \
 	$(patsubst $(SRC)/%.cpp,$(SRC)/%.o,$(wildcard $(SRC)/*.cpp)) \
 	$(patsubst $(SRC)/%.cxx,$(SRC)/%.o,$(wildcard $(SRC)/*.cxx))
 
+#for subdirectory inclusion, if specified.
 -include $(SRC)/subdir.mk
-
-
-
-# dependency-generation flags
-DEPFLAGS = -MM -MG -MT
 
 ####################################################################################
 ####################################################################################
@@ -93,6 +90,7 @@ else
 LDFLAGS +=
 endif
 
+#make a .map file of our linked program.
 ifneq ($(MAKECMDGOALS),nomap)
 LDFLAGS += -Wl,-Map=$(BIN)/$(EXE).map -lm -Wl,--cref
 endif
@@ -111,12 +109,22 @@ LDLIBS = $(LIBADD)
 #-include $(SRC)/subdir.mk
 	
 # include compiler-generated dependency rules
+# dependency-generation flags
+DEPFLAGS = -MM -MG -MT
 #  | sed "s,\(\)\.o[ :]*,\1.o $@ $(@:.d=.pp) $(@:.d=.su) : ,g"
 DEPENDS := $(OBJECTS:.o=.d)
 DEPEND.c = $(CC) $(CFLAGS) $(DEPFLAGS) $(@:.d=.o) $(@:.d=.c) 
 DEPEND.s = $(CC) $(CFLAGS) $(DEPFLAGS) $(@:.d=.o) $(@:.d=.s) 
 DEPEND.cxx = $(CXX) $(CFLAGS) $(DEPFLAGS) $(@:.d=.o) $(@:.d=.cpp) 
 
+# dependencies want to get rebuilt on clean for some reason, bluntly ignore it
+ifneq ($(MAKECMDGOALS),clean)
+ifneq ($(MAKECMDGOALS),cleanall)
+ifneq ($(MAKECMDGOALS),lib)
+-include $(DEPENDS)
+endif
+endif
+endif
 
 # compile C source
 COMPILE.c = $(CC) $(FLAGS) $(CFLAGS) -c -o $@ -L$(STD_PERIPH_LIB) -lstm32f0 -L$(LDSCRIPT_INC)
@@ -125,16 +133,27 @@ COMPILE.cxx = $(CXX) $(FLAGS) $(CXXFLAGS) $(CPPFLAGS) -c -o $@ -L$(STD_PERIPH_LI
 # link objects
 LINK.o = $(LD) $(FLAGS) $(CFLAGS) $(LDFLAGS) -o $@ -L$(STD_PERIPH_LIB) -lstm32f0 -L$(LDSCRIPT_INC) -Tstm32f0.ld $(LDLIBS)
 
+####################################################################################
+####################################################################################
+
+#Targets 
+
 .DEFAULT_GOAL = all
 
-.PHONY: $(SRC)/bsp/libstm32f0.a all nomap
+.PHONY: all nomap
 all nomap: $(BIN)/$(EXE).elf
-bsp/libstm32f0.a: lib
 
-lib:
+.PHONY: lib
+lib: $(SRC)/bsp/libstm32f0.a
+$(SRC)/bsp/libstm32f0.a:
 	$(MAKE) -C $(STD_PERIPH_LIB)
+	# removes object files after library built - no point in keeping them with the lib
+	$(MAKE) -C $(STD_PERIPH_LIB) clean
+	
 
-$(BIN)/$(EXE).elf: $(OBJECTS)
+#.elf requires the lib file (made in bsp folder)
+#Linking
+$(BIN)/$(EXE).elf: $(OBJECTS) $(SRC)/bsp/libstm32f0.a
 	$(info Linking target $@ from $<)
 	$(LINK.o) $(OBJECTS)
 	$(OBJCOPY) -O ihex $(BIN)/$(EXE).elf $(BIN)/$(EXE).hex
@@ -150,6 +169,7 @@ $(BIN):
 	$(info ./$(BIN) directory not found, creating ./$(BIN))
 	@mkdir -p $(BIN)
 
+#Dependency building.
 %.d: %.s
 	$(info Rebuilding dependencies for $(@:.d=.s))
 	@$(DEPEND.s) $< > $@
@@ -170,7 +190,7 @@ $(BIN):
 	$(info Rebuilding dependencies for $(@:.d=.cxx))
 	@$(DEPEND.cxx) $< > $@
 
-
+#Compiling
 %.o: %.s
 	$(info Compiling assembly file)
 	$(info ..... ./$(@:.o=.s) ==> ./$(@))
@@ -221,15 +241,15 @@ clean:
 	@$(RM) $(BIN)/$(EXE).hex
 	@$(RM) $(BIN)/$(EXE).lst
 
+#remove everything, including the lib file
+.PHONY: cleanall
+cleanall: clean
+	$(MAKE) -C $(STD_PERIPH_LIB) cleanTrue
+	
 	
 
 # remove everything except source
 .PHONY: reset
 reset:
-	$(RM) -r $(OBJ)
 	$(RM) -r $(BIN)
 
-# dependencies want to get rebuilt on clean for some reason, bluntly ignore it
-ifneq ($(MAKECMDGOALS),clean)
--include $(DEPENDS)
-endif
