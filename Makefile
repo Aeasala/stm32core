@@ -11,8 +11,10 @@ include config.mk
 EXE = $(APPNAME)
 
 # BSP and provided linker scripts
-BSP=bsp
-STD_PERIPH_LIB=$(SRC)/$(BSP)
+BIN = bin
+OBJ = obj
+SRC = src
+BSP = $(SRC)/bsp
 LDSCRIPT_INC=$(SRC)/dev
 
 ####################################################################################
@@ -39,17 +41,14 @@ CFLAGS += -Wl,--gc-sections
 # dependencies and includes.  may remove
 
 # stm32f0xx_conf.h's relations are dependent on preprocessor definitions within Application.h, hence the ordering.
-INCLUDES = -I$(STD_PERIPH_LIB) -I $(STD_PERIPH_LIB)/CMSIS/Device/ST/STM32F0xx/Include
-INCLUDES += -I $(STD_PERIPH_LIB)/CMSIS/Include -I $(STD_PERIPH_LIB)/STM32F0xx_StdPeriph_Driver/inc
+INCLUDES = -I$(BSP) -I $(BSP)/CMSIS/Device/ST/STM32F0xx/Include
+INCLUDES += -I $(BSP)/CMSIS/Include -I $(BSP)/STM32F0xx_StdPeriph_Driver/inc
 INCLUDES += -include $(SRC)/Application.h -include $(SRC)/stm32f0xx_conf.h
 
 ####################################################################################
 ####################################################################################
 
 # build directories and eventual item goals
-BIN = bin
-OBJ = obj
-SRC = src
 
 SOURCES := $(wildcard $(SRC)/dev/*.s $(SRC)/*.c)
 OBJECTS := \
@@ -61,19 +60,6 @@ OBJECTS := \
 
 ####################################################################################
 ####################################################################################
-
-# primary linker flags -- do we need a specific entry point?
-# win
-ifeq ($(shell uname -a | grep -ic CYGWIN_NT), 1)
-LDFLAGS +=
-# lin
-else ifeq ($(shell uname -a | grep -ic Linux), 1)
-ENTRYPT = _start	
-LDFLAGS += -Wl,--entry=$(ENTRYPT) -lm
-# etc
-else
-LDFLAGS +=
-endif
 
 #make a .map file of our linked program.
 ifneq ($(MAKECMDGOALS),nomap)
@@ -101,15 +87,17 @@ DEPEND.s = $(CC) $(INCLUDES) $(CFLAGS) $(DEPFLAGS) $(@:.d=.o) $(@:.d=.s)
 ifneq ($(MAKECMDGOALS),clean)
 ifneq ($(MAKECMDGOALS),cleanall)
 ifneq ($(MAKECMDGOALS),lib)
+ifneq ($(MAKECMDGOALS),remake)
 -include $(DEPENDS)
+endif
 endif
 endif
 endif
 
 # compile C source
-COMPILE.c = $(CC) $(INCLUDES) $(FLAGS) $(CFLAGS) -c -o $@ -L$(STD_PERIPH_LIB) -lstm32f0 -L$(BIN)
+COMPILE.c = $(CC) $(INCLUDES) $(FLAGS) $(CFLAGS) -c -o $@ -L$(BSP) -lstm32f0 -L$(BIN)
 # link objects
-LINK.o = $(LD) $(INCLUDES) $(FLAGS) $(CFLAGS) $(LDFLAGS) -o $@ -L$(STD_PERIPH_LIB) -lstm32f0 -L$(BIN) -T$(EXE).ld
+LINK.o = $(LD) $(INCLUDES) $(FLAGS) $(CFLAGS) $(LDFLAGS) -o $@ -L$(BSP) -lstm32f0 -L$(BIN) -T$(EXE).ld
 
 ####################################################################################
 ####################################################################################
@@ -122,19 +110,19 @@ LINK.o = $(LD) $(INCLUDES) $(FLAGS) $(CFLAGS) $(LDFLAGS) -o $@ -L$(STD_PERIPH_LI
 all nomap: $(BIN)/$(EXE).elf
 
 .PHONY: lib
-lib: $(SRC)/bsp/libstm32f0.a
-$(SRC)/bsp/libstm32f0.a:
+lib: $(BSP)/libstm32f0.a
+$(BSP)/libstm32f0.a:
 	$(info Rebuilding $(@))
 	$(info )
-	@$(MAKE) --no-print-directory -C $(STD_PERIPH_LIB)
-	@$(MAKE) --no-print-directory -C $(STD_PERIPH_LIB) clean
+	@$(MAKE) --no-print-directory -C $(BSP)
+	@$(MAKE) --no-print-directory -C $(BSP) clean
 
 # Objects *must* await the library to be built.
-$(OBJECTS): $(SRC)/bsp/libstm32f0.a
+$(OBJECTS): $(BSP)/libstm32f0.a
 
 #.elf requires the lib file (made in bsp folder)
 #Linking
-$(BIN)/$(EXE).elf: $(BIN)/$(EXE).ld $(SRC)/bsp/libstm32f0.a $(OBJECTS)
+$(BIN)/$(EXE).elf: $(BIN)/$(EXE).ld $(BSP)/libstm32f0.a $(OBJECTS)
 	$(info Linking target "$@" using "$<"...)
 	@$(LINK.o) $(OBJECTS)
 	$(info Creating hex...)
@@ -143,10 +131,11 @@ $(BIN)/$(EXE).elf: $(BIN)/$(EXE).ld $(SRC)/bsp/libstm32f0.a $(OBJECTS)
 	@$(OBJCOPY) -O binary $(BIN)/$(EXE).elf $(BIN)/$(EXE).bin
 	$(info Dumping symbol table...)
 	@$(OBJDUMP) -St $(BIN)/$(EXE).elf >$(BIN)/$(EXE).lst
+	$(info ---------------------------------------)
 	$(info Done.  Executable size/composition:)
-	$(SIZE) $(BIN)/$(EXE).elf
+	@$(SIZE) $(BIN)/$(EXE).elf
 	
-$(BIN)/$(EXE).ld: $(SRC)/Application.h $(LDSCRIPT_INC)/core.ld $(SRC)/bsp/libstm32f0.a $(OBJECTS)
+$(BIN)/$(EXE).ld: $(SRC)/Application.h $(LDSCRIPT_INC)/core.ld $(BSP)/libstm32f0.a $(OBJECTS)
 	$(info Generating linker-directive file "$@" from preprocessor definitions...)
 	@$(CC) -I$(SRC) -P -E -x c $(LDSCRIPT_INC)/core.ld -o $(BIN)/$(EXE).ld
 	
@@ -200,7 +189,8 @@ $(BIN):
 
 # force rebuild
 .PHONY: remake
-remake:	clean $(BIN)/$(EXE).elf
+remake: clean
+	@$(MAKE) --no-print-directory $(BIN)/$(EXE).elf
 
 # remove previous build and objects
 .PHONY: clean
@@ -219,12 +209,12 @@ clean:
 	@$(RM) $(BIN)/$(EXE).dasm
 	@$(RM) $(BIN)/$(EXE).ld
 	@$(RM) $(OBJECTS:.o=.dasm)
-	@$(RM) $(SRC)/bsp/libstm32f0.dasm
+	@$(RM) $(BSP)/libstm32f0.dasm
 
 #remove everything, including the lib file
 .PHONY: cleanall
 cleanall: clean
-	@$(MAKE) --no-print-directory -C $(STD_PERIPH_LIB) cleanTrue
+	@$(MAKE) --no-print-directory -C $(BSP) cleanTrue
 	
 .PHONY: dasm
 dasm: $(BIN)/$(EXE).dasm
@@ -232,7 +222,7 @@ dasm: $(BIN)/$(EXE).dasm
 	@$(OBJDUMP) -d $(BIN)/$(EXE).elf > $(BIN)/$(EXE).dasm
 
 .PHONY: dasmall
-dasmall: $(BIN)/$(EXE).dasm $(OBJECTS:.o=.dasm) $(SRC)/bsp/libstm32f0.dasm
+dasmall: $(BIN)/$(EXE).dasm $(OBJECTS:.o=.dasm) $(BSP)/libstm32f0.dasm
 	
 # remove everything except source
 .PHONY: reset
