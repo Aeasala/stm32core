@@ -1,7 +1,7 @@
 # Initial template: Credits to Tom Daley
 #     https://gist.github.com/tomdaley92/190c68e8a84038cc91a5459409e007df
 
-# A generic build template for C/C++ programs
+# A generic build template for C programs in STM32
 
 ####################################################################################
 ####################################################################################
@@ -20,10 +20,8 @@ LDSCRIPT_INC=$(SRC)/dev
 
 # C compiler
 CC = arm-none-eabi-gcc
-# C++ compiler
-CXX = arm-none-eabi-g++
 # linker
-LD = arm-none-eabi-g++
+LD = arm-none-eabi-gcc
 #other utils
 OBJCOPY=arm-none-eabi-objcopy
 OBJDUMP=arm-none-eabi-objdump
@@ -39,13 +37,8 @@ CFLAGS += -Wl,--gc-sections
 ####################################################################################
 
 # dependencies and includes.  may remove
-vpath %.c src
-vpath %.a $(STD_PERIPH_LIB)
 
-ROOT=$(shell pwd)
-
-
-# keep these as is.
+# stm32f0xx_conf.h's relations are dependent on preprocessor definitions within Application.h, hence the ordering.
 INCLUDES = -I$(STD_PERIPH_LIB) -I $(STD_PERIPH_LIB)/CMSIS/Device/ST/STM32F0xx/Include
 INCLUDES += -I $(STD_PERIPH_LIB)/CMSIS/Include -I $(STD_PERIPH_LIB)/STM32F0xx_StdPeriph_Driver/inc
 INCLUDES += -include $(SRC)/Application.h -include $(SRC)/stm32f0xx_conf.h
@@ -58,13 +51,10 @@ BIN = bin
 OBJ = obj
 SRC = src
 
-SOURCES := $(wildcard $(SRC)/dev/*.s $(SRC)/*.c $(SRC)/*.cc $(SRC)/*.cpp $(SRC)/*.cxx)
+SOURCES := $(wildcard $(SRC)/dev/*.s $(SRC)/*.c)
 OBJECTS := \
 	$(patsubst $(SRC)/dev/%.s,$(SRC)/dev/%.o,$(wildcard $(SRC)/dev/*.s)) \
-	$(patsubst $(SRC)/%.c,$(SRC)/%.o,$(wildcard $(SRC)/*.c)) \
-	$(patsubst $(SRC)/%.cc,$(SRC)/%.o,$(wildcard $(SRC)/*.cc)) \
-	$(patsubst $(SRC)/%.cpp,$(SRC)/%.o,$(wildcard $(SRC)/*.cpp)) \
-	$(patsubst $(SRC)/%.cxx,$(SRC)/%.o,$(wildcard $(SRC)/*.cxx))
+	$(patsubst $(SRC)/%.c,$(SRC)/%.o,$(wildcard $(SRC)/*.c))
 
 #for subdirectory inclusion, if specified.
 -include $(SRC)/subdir.mk
@@ -106,7 +96,6 @@ DEPFLAGS = -MM -MG -MT
 DEPENDS := $(OBJECTS:.o=.d)
 DEPEND.c = $(CC) $(INCLUDES) $(CFLAGS) $(DEPFLAGS) $(@:.d=.o) $(@:.d=.c) 
 DEPEND.s = $(CC) $(INCLUDES) $(CFLAGS) $(DEPFLAGS) $(@:.d=.o) $(@:.d=.s) 
-DEPEND.cxx = $(CXX) $(INCLUDES) $(CFLAGS) $(DEPFLAGS) $(@:.d=.o) $(@:.d=.cpp) 
 
 # dependencies want to get rebuilt on clean for some reason, bluntly ignore it
 ifneq ($(MAKECMDGOALS),clean)
@@ -119,8 +108,6 @@ endif
 
 # compile C source
 COMPILE.c = $(CC) $(INCLUDES) $(FLAGS) $(CFLAGS) -c -o $@ -L$(STD_PERIPH_LIB) -lstm32f0 -L$(BIN)
-# compile C++ source
-COMPILE.cxx = $(CXX) $(INCLUDES) $(FLAGS) $(CXXFLAGS) $(CPPFLAGS) -c -o $@ -L$(STD_PERIPH_LIB) -lstm32f0 -L$(BIN) -T$(EXE).ld
 # link objects
 LINK.o = $(LD) $(INCLUDES) $(FLAGS) $(CFLAGS) $(LDFLAGS) -o $@ -L$(STD_PERIPH_LIB) -lstm32f0 -L$(BIN) -T$(EXE).ld
 
@@ -137,23 +124,30 @@ all nomap: $(BIN)/$(EXE).elf
 .PHONY: lib
 lib: $(SRC)/bsp/libstm32f0.a
 $(SRC)/bsp/libstm32f0.a:
-	$(MAKE) -C $(STD_PERIPH_LIB)
-	# removes object files after library built - no point in keeping them with the lib
-	$(MAKE) -C $(STD_PERIPH_LIB) clean
-	
+	$(info Rebuilding $(@))
+	$(info )
+	@$(MAKE) --no-print-directory -C $(STD_PERIPH_LIB)
+	@$(MAKE) --no-print-directory -C $(STD_PERIPH_LIB) clean
+
+# Objects *must* await the library to be built.
+$(OBJECTS): $(SRC)/bsp/libstm32f0.a
 
 #.elf requires the lib file (made in bsp folder)
 #Linking
-$(BIN)/$(EXE).elf: $(BIN)/$(EXE).ld $(OBJECTS) $(SRC)/bsp/libstm32f0.a 
-	$(info Linking target $@ from $<)
-	$(LINK.o) $(OBJECTS)
-	$(OBJCOPY) -O ihex $(BIN)/$(EXE).elf $(BIN)/$(EXE).hex
-	$(OBJCOPY) -O binary $(BIN)/$(EXE).elf $(BIN)/$(EXE).bin
-	$(OBJDUMP) -St $(BIN)/$(EXE).elf >$(BIN)/$(EXE).lst
+$(BIN)/$(EXE).elf: $(BIN)/$(EXE).ld $(SRC)/bsp/libstm32f0.a $(OBJECTS)
+	$(info Linking target "$@" using "$<"...)
+	@$(LINK.o) $(OBJECTS)
+	$(info Creating hex...)
+	@$(OBJCOPY) -O ihex $(BIN)/$(EXE).elf $(BIN)/$(EXE).hex
+	$(info Creating bin...)
+	@$(OBJCOPY) -O binary $(BIN)/$(EXE).elf $(BIN)/$(EXE).bin
+	$(info Dumping symbol table...)
+	@$(OBJDUMP) -St $(BIN)/$(EXE).elf >$(BIN)/$(EXE).lst
+	$(info Done.  Executable size/composition:)
 	$(SIZE) $(BIN)/$(EXE).elf
 	
-$(BIN)/$(EXE).ld: $(SRC)/Application.h $(LDSCRIPT_INC)/core.ld $(OBJECTS)
-	$(info tryna)
+$(BIN)/$(EXE).ld: $(SRC)/Application.h $(LDSCRIPT_INC)/core.ld $(SRC)/bsp/libstm32f0.a $(OBJECTS)
+	$(info Generating linker-directive file "$@" from preprocessor definitions...)
 	@$(CC) -I$(SRC) -P -E -x c $(LDSCRIPT_INC)/core.ld -o $(BIN)/$(EXE).ld
 	
 $(SRC):
@@ -173,58 +167,36 @@ $(BIN):
 	$(info Rebuilding dependencies for $(@:.d=.c))
 	@$(DEPEND.c) $< > $@
 
-%.d: %.cc
-	$(info Rebuilding dependencies for $(@:.d=.cc))
-	@$(DEPEND.cxx) $< > $@
-
-%.d: %.cpp
-	$(info Rebuilding dependencies for $(@:.d=.cpp))
-	@$(DEPEND.cxx) $< > $@
-
-%.d: %.cxx
-	$(info Rebuilding dependencies for $(@:.d=.cxx))
-	@$(DEPEND.cxx) $< > $@
-
 #Compiling
 %.o: %.s
 	$(info Compiling assembly file)
 	$(info ..... ./$(@:.o=.s) ==> ./$(@))
 	@$(COMPILE.c) $< 
+	$(info )
 
 %.o: %.c
 	$(info Compiling source file)
 	$(info ..... ./$(@:.o=.c) ==> ./$(@))
-	$(COMPILE.c) $< 
-
-%.o: %.cc
-	$(info Compiling source file)
-	$(info ..... ./$(@:.o=.cc) ==> ./$(@))
-	@$(COMPILE.cxx) $<
-
-%.o: %.cpp
-	$(info Compiling source file)
-	$(info ..... ./$(@:.o=.cpp) ==> ./$(@))
-	@$(COMPILE.cxx) $<
-
-%.o: %.cxx
-	$(info Compiling source file)
-	$(info ..... ./$(@:.o=.cxx) ==> ./$(@))
-	@$(COMPILE.cxx) $<
+	@$(COMPILE.c) $< 
+	$(info )
 
 %.dasm: %.elf
 	$(info Disassembling elf)
 	$(info ..... ./$(@:.elf=.dasm) ==> ./$(@))
 	@$(OBJDUMP) -d $(@:.dasm=.elf) > $@
+	$(info )
 
 %.dasm: %.o
 	$(info Disassembling object)
 	$(info ..... ./$(@:.o=.dasm) ==> ./$(@))
 	@$(OBJDUMP) -d $(@:.dasm=.o) > $@
-	
+	$(info )
+
 %.dasm: %.a
 	$(info Disassembling library)
 	$(info ..... ./$(@:.a=.dasm) ==> ./$(@))
 	@$(OBJDUMP) -d $(@:.dasm=.a) > $@
+	$(info )
 
 # force rebuild
 .PHONY: remake
@@ -252,7 +224,7 @@ clean:
 #remove everything, including the lib file
 .PHONY: cleanall
 cleanall: clean
-	$(MAKE) -C $(STD_PERIPH_LIB) cleanTrue
+	@$(MAKE) --no-print-directory -C $(STD_PERIPH_LIB) cleanTrue
 	
 .PHONY: dasm
 dasm: $(BIN)/$(EXE).dasm
