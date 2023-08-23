@@ -214,6 +214,20 @@ $(BIN):
 	$(info ..... ./$(@:.o=.cxx) ==> ./$(@))
 	@$(COMPILE.cxx) $<
 
+%.dasm: %.elf
+	$(info Disassembling elf)
+	$(info ..... ./$(@:.elf=.dasm) ==> ./$(@))
+	@$(OBJDUMP) -d $(@:.dasm=.elf) > $@
+
+%.dasm: %.o
+	$(info Disassembling object)
+	$(info ..... ./$(@:.o=.dasm) ==> ./$(@))
+	@$(OBJDUMP) -d $(@:.dasm=.o) > $@
+	
+%.dasm: %.a
+	$(info Disassembling library)
+	$(info ..... ./$(@:.a=.dasm) ==> ./$(@))
+	@$(OBJDUMP) -d $(@:.dasm=.a) > $@
 
 # force rebuild
 .PHONY: remake
@@ -238,16 +252,37 @@ clean:
 	@$(RM) $(BIN)/$(EXE).bin
 	@$(RM) $(BIN)/$(EXE).hex
 	@$(RM) $(BIN)/$(EXE).lst
+	@$(RM) $(BIN)/$(EXE).dasm
+	@$(RM) $(OBJECTS:.o=.dasm)
+	@$(RM) $(SRC)/bsp/libstm32f0.dasm
 
 #remove everything, including the lib file
 .PHONY: cleanall
 cleanall: clean
 	$(MAKE) -C $(STD_PERIPH_LIB) cleanTrue
 	
-	
+.PHONY: dasm
+dasm: $(BIN)/$(EXE).dasm
+	$(info Disassembling "$(BIN)/$(EXE).elf" to "$(BIN)/$(EXE).dasm")
+	@$(OBJDUMP) -d $(BIN)/$(EXE).elf > $(BIN)/$(EXE).dasm
 
+.PHONY: dasmall
+dasmall: $(BIN)/$(EXE).dasm $(OBJECTS:.o=.dasm) $(SRC)/bsp/libstm32f0.dasm
+	
 # remove everything except source
 .PHONY: reset
 reset:
 	$(RM) -r $(BIN)
 
+.PHONY: help
+help:
+	$(info clean: removes all objects, dependencies, and executables)
+	$(info cleanall: removes everything from clean as well as the generated library file)
+	$(info remake: cleans and rebuilds the program)
+	$(info nomap: omits the map file)
+	$(info lib: just generate the library)
+	$(info dasmall: disassemble everything)
+	$(info dasm: disassemble the elf)
+	
+	
+	
