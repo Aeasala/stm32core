@@ -125,11 +125,11 @@ endif
 endif
 
 # compile C source
-COMPILE.c = $(CC) $(FLAGS) $(CFLAGS) -c -o $@ -L$(STD_PERIPH_LIB) -lstm32f0 -L$(LDSCRIPT_INC)
+COMPILE.c = $(CC) $(FLAGS) $(CFLAGS) -c -o $@ -L$(STD_PERIPH_LIB) -lstm32f0 -L$(BIN)
 # compile C++ source
-COMPILE.cxx = $(CXX) $(FLAGS) $(CXXFLAGS) $(CPPFLAGS) -c -o $@ -L$(STD_PERIPH_LIB) -lstm32f0 -L$(LDSCRIPT_INC) -Tstm32f0.ld
+COMPILE.cxx = $(CXX) $(FLAGS) $(CXXFLAGS) $(CPPFLAGS) -c -o $@ -L$(STD_PERIPH_LIB) -lstm32f0 -L$(BIN) -T$(EXE).ld
 # link objects
-LINK.o = $(LD) $(FLAGS) $(CFLAGS) $(LDFLAGS) -o $@ -L$(STD_PERIPH_LIB) -lstm32f0 -L$(LDSCRIPT_INC) -Tstm32f0.ld $(LDLIBS)
+LINK.o = $(LD) $(FLAGS) $(CFLAGS) $(LDFLAGS) -o $@ -L$(STD_PERIPH_LIB) -lstm32f0 -L$(BIN) -T$(EXE).ld $(LDLIBS)
 
 ####################################################################################
 ####################################################################################
@@ -159,9 +159,8 @@ $(BIN)/$(EXE).elf: $(BIN)/$(EXE).ld $(OBJECTS) $(SRC)/bsp/libstm32f0.a
 	$(OBJDUMP) -St $(BIN)/$(EXE).elf >$(BIN)/$(EXE).lst
 	$(SIZE) $(BIN)/$(EXE).elf
 	
-$(BIN)/$(EXE).ld: $(SRC)/Application.h $(LDSCRIPT_INC)/stm32f0.ld $(OBJECTS)
-	$(info yahooooooooooooo)
-	@$(CC) -I$(SRC)/Application.h -P -E -x c $(SRC)/dev/stm32f0.ld -o $(BIN)/$(EXE).ld
+$(BIN)/$(EXE).ld: $(SRC)/Application.h $(LDSCRIPT_INC)/core.ld $(OBJECTS)
+	@$(CC) -I$(SRC) -P -E -x c $(LDSCRIPT_INC)/core.ld -o $(BIN)/$(EXE).ld
 	
 $(SRC):
 	$(info ./$(SRC) directory not found, creating ./$(SRC))
