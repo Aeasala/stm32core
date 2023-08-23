@@ -13,3 +13,10 @@
 *.png
 Documentation
 SVD
+/bin/*.dasm
+/bin/*.ld
+/src/bsp/*.dasm
+/src/dev/*.d
+/src/dev/*.dasm
+/src/*.d
+/src/*.dasm
