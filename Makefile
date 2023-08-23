@@ -117,7 +117,8 @@ $(BSP)/libstm32f0.a:
 	@$(MAKE) --no-print-directory -C $(BSP)
 	@$(MAKE) --no-print-directory -C $(BSP) clean
 
-# Objects *must* await the library to be built.
+# Objects/depends *must* await the library to be built.
+$(DEPENDS): $(BSP)/libstm32f0.a
 $(OBJECTS): $(BSP)/libstm32f0.a
 
 #.elf requires the lib file (made in bsp folder)
