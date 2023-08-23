@@ -7,9 +7,12 @@ Do not modify it, as it will be erased at every link.
 You can use, copy and distribute this file freely, but without any waranty.
 */
 
-/* include the memory spaces definitions sub-script */
-INCLUDE "stm32f0discovery_def.ld"
+#include "../Application.h"
 
+/* include the memory spaces definitions sub-script */
+#ifdef STM32F051R8
+INCLUDE "STM32F051R8.ld"
+#endif
 /* include the sections management sub-script for FLASH mode */
 INCLUDE "sections_flash.ld"
 

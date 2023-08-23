@@ -13,7 +13,7 @@ EXE = $(APPNAME)
 # BSP and provided linker scripts
 BSP=bsp
 STD_PERIPH_LIB=$(SRC)/$(BSP)
-LDSCRIPT_INC=$(SRC)/dev/ldscripts
+LDSCRIPT_INC=$(SRC)/dev
 
 ####################################################################################
 ####################################################################################
@@ -51,7 +51,7 @@ ROOT=$(shell pwd)
 # keep these as is.
 CFLAGS += -I inc -I$(STD_PERIPH_LIB) -I $(STD_PERIPH_LIB)/CMSIS/Device/ST/STM32F0xx/Include
 CFLAGS += -I $(STD_PERIPH_LIB)/CMSIS/Include -I $(STD_PERIPH_LIB)/STM32F0xx_StdPeriph_Driver/inc
-FLAGS += -include $(STD_PERIPH_LIB)/stm32f0xx_conf.h
+FLAGS += -include $(SRC)/stm32f0xx_conf.h
 
 ####################################################################################
 ####################################################################################
@@ -151,14 +151,18 @@ $(SRC)/bsp/libstm32f0.a:
 
 #.elf requires the lib file (made in bsp folder)
 #Linking
-$(BIN)/$(EXE).elf: $(OBJECTS) $(SRC)/bsp/libstm32f0.a
+$(BIN)/$(EXE).elf: $(BIN)/$(EXE).ld $(OBJECTS) $(SRC)/bsp/libstm32f0.a 
 	$(info Linking target $@ from $<)
 	$(LINK.o) $(OBJECTS)
 	$(OBJCOPY) -O ihex $(BIN)/$(EXE).elf $(BIN)/$(EXE).hex
 	$(OBJCOPY) -O binary $(BIN)/$(EXE).elf $(BIN)/$(EXE).bin
 	$(OBJDUMP) -St $(BIN)/$(EXE).elf >$(BIN)/$(EXE).lst
 	$(SIZE) $(BIN)/$(EXE).elf
-
+	
+$(BIN)/$(EXE).ld: $(SRC)/Application.h $(LDSCRIPT_INC)/stm32f0.ld $(OBJECTS)
+	$(info yahooooooooooooo)
+	@$(CC) -I$(SRC)/Application.h -P -E -x c $(SRC)/dev/stm32f0.ld -o $(BIN)/$(EXE).ld
+	
 $(SRC):
 	$(info ./$(SRC) directory not found, creating ./$(SRC))
 	@mkdir -p $(SRC)
@@ -253,6 +257,7 @@ clean:
 	@$(RM) $(BIN)/$(EXE).hex
 	@$(RM) $(BIN)/$(EXE).lst
 	@$(RM) $(BIN)/$(EXE).dasm
+	@$(RM) $(BIN)/$(EXE).ld
 	@$(RM) $(OBJECTS:.o=.dasm)
 	@$(RM) $(SRC)/bsp/libstm32f0.dasm
 
