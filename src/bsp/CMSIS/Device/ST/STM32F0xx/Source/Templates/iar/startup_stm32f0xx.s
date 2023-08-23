@@ -1,31 +1,28 @@
-;******************** (C) COPYRIGHT 2012 STMicroelectronics ********************
+;******************** (C) COPYRIGHT 2016 STMicroelectronics ********************
 ;* File Name          : startup_stm32f0xx.s
 ;* Author             : MCD Application Team
-;* Version            : V1.0.1
-;* Date               : 20-April-2012
-;* Description        : STM32F0xx Devices vector table for EWARM toolchain.
+;* Version            : V1.5.2
+;* Date               : 13-October-2021   
+;* Description        : STM32F051 devices vector table for EWARM toolchain.
 ;*                      This module performs:
 ;*                      - Set the initial SP
 ;*                      - Set the initial PC == iar_program_start,
 ;*                      - Set the vector table entries with the exceptions ISR 
-;*                        address.
+;*                        address
+;*                      - Configure the system clock
+;*                      - Branches to main in the C library (which eventually
+;*                        calls main()).
 ;*                      After Reset the Cortex-M0 processor is in Thread mode,
 ;*                      priority is Privileged, and the Stack is set to Main.
 ;*******************************************************************************
-;  @attention
-; 
-;  Licensed under MCD-ST Liberty SW License Agreement V2, (the "License");
-;  You may not use this file except in compliance with the License.
-;  You may obtain a copy of the License at:
-; 
-;         http://www.st.com/software_license_agreement_liberty_v2
-; 
-;  Unless required by applicable law or agreed to in writing, software 
-;  distributed under the License is distributed on an "AS IS" BASIS, 
-;  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-;  See the License for the specific language governing permissions and
-;  limitations under the License.
-; 
+;*
+;* Copyright (c) 2016 STMicroelectronics.
+;* All rights reserved.
+;*
+;* This software is licensed under terms that can be found in the LICENSE file
+;* in the root directory of this software component.
+;* If no LICENSE file comes with this software, it is provided AS-IS.
+;
 ;*******************************************************************************
 ;
 ;
@@ -116,8 +113,31 @@ __vector_table
         THUMB
 
         PUBWEAK Reset_Handler
-        SECTION .text:CODE:REORDER(2)
+        SECTION .text:CODE:NOROOT:REORDER(2)
 Reset_Handler
+
+        LDR     R0, =sfe(CSTACK)          ; set stack pointer 
+        MSR     MSP, R0 
+
+;;Check if boot space corresponds to test memory 
+        LDR R0,=0x00000004
+        LDR R1, [R0]
+        LSRS R1, R1, #24
+        LDR R2,=0x1F
+        CMP R1, R2
+        
+        BNE ApplicationStart       
+;; SYSCFG clock enable         
+        LDR R0,=0x40021018 
+        LDR R1,=0x00000001
+        STR R1, [R0]
+        
+;; Set CFGR1 register with flash memory remap at address 0
+
+        LDR R0,=0x40010000 
+        LDR R1,=0x00000000
+        STR R1, [R0]
+ApplicationStart
         LDR     R0, =SystemInit
         BLX     R0
         LDR     R0, =__iar_program_start
@@ -327,4 +347,4 @@ CEC_IRQHandler
         B CEC_IRQHandler
 
         END
-;************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE*****
+

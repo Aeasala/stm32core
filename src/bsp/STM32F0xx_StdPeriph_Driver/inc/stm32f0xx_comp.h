@@ -2,26 +2,19 @@
   ******************************************************************************
   * @file    stm32f0xx_comp.h
   * @author  MCD Application Team
-  * @version V1.0.1
-  * @date    20-April-2012
+  * @version V1.5.1
+  * @date    13-October-2021
   * @brief   This file contains all the functions prototypes for the COMP firmware 
-  *          library.
+  *          library, applicable only for STM32F051 and STM32F072 devices.
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; COPYRIGHT 2012 STMicroelectronics</center></h2>
+  * Copyright (c) 2014 STMicroelectronics.
+  * All rights reserved.
   *
-  * Licensed under MCD-ST Liberty SW License Agreement V2, (the "License");
-  * You may not use this file except in compliance with the License.
-  * You may obtain a copy of the License at:
-  *
-  *        http://www.st.com/software_license_agreement_liberty_v2
-  *
-  * Unless required by applicable law or agreed to in writing, software 
-  * distributed under the License is distributed on an "AS IS" BASIS, 
-  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  * See the License for the specific language governing permissions and
-  * limitations under the License.
+  * This software is licensed under terms that can be found in the LICENSE file
+  * in the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
   *
   ******************************************************************************
   */
@@ -97,10 +90,11 @@ typedef struct
   */
 
 #define COMP_InvertingInput_1_4VREFINT          ((uint32_t)0x00000000) /*!< 1/4 VREFINT connected to comparator inverting input */
-#define COMP_InvertingInput_1_2VREFINT          COMP_CSR_COMP1INSEL_0 /*!< 1/2 VREFINT connected to comparator inverting input */
-#define COMP_InvertingInput_3_4VREFINT          COMP_CSR_COMP1INSEL_1 /*!< 3/4 VREFINT connected to comparator inverting input */
+#define COMP_InvertingInput_1_2VREFINT          COMP_CSR_COMP1INSEL_0  /*!< 1/2 VREFINT connected to comparator inverting input */
+#define COMP_InvertingInput_3_4VREFINT          COMP_CSR_COMP1INSEL_1  /*!< 3/4 VREFINT connected to comparator inverting input */
 #define COMP_InvertingInput_VREFINT             ((uint32_t)0x00000030) /*!< VREFINT connected to comparator inverting input */
-#define COMP_InvertingInput_DAC1                COMP_CSR_COMP1INSEL_2 /*!< DAC1_OUT connected to comparator inverting input */
+#define COMP_InvertingInput_DAC1                COMP_CSR_COMP1INSEL_2  /*!< DAC1_OUT (PA4) connected to comparator inverting input */
+#define COMP_InvertingInput_DAC2                ((uint32_t)0x00000050) /*!< DAC2_OUT (PA5) connected to comparator inverting input, applicable only for STM32F072 devices */
 #define COMP_InvertingInput_IO                  ((uint32_t)0x00000060) /*!< I/O (PA0 for COMP1 and PA2 for COMP2) connected to comparator inverting input */
 
 #define IS_COMP_INVERTING_INPUT(INPUT) (((INPUT) == COMP_InvertingInput_1_4VREFINT) || \
@@ -108,6 +102,7 @@ typedef struct
                                         ((INPUT) == COMP_InvertingInput_3_4VREFINT) || \
                                         ((INPUT) == COMP_InvertingInput_VREFINT)    || \
                                         ((INPUT) == COMP_InvertingInput_DAC1)       || \
+                                        ((INPUT) == COMP_InvertingInput_DAC2)       || \
                                         ((INPUT) == COMP_InvertingInput_1_4VREFINT) || \
                                         ((INPUT) == COMP_InvertingInput_IO))
 /**
@@ -240,4 +235,3 @@ void COMP_LockConfig(uint32_t COMP_Selection);
   * @}
   */
 
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
