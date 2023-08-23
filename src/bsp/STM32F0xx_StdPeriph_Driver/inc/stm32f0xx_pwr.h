@@ -2,26 +2,19 @@
   ******************************************************************************
   * @file    stm32f0xx_pwr.h
   * @author  MCD Application Team
-  * @version V1.0.1
-  * @date    20-April-2012
+  * @version V1.5.1
+  * @date    13-October-2021
   * @brief   This file contains all the functions prototypes for the PWR firmware 
   *          library.
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; COPYRIGHT 2012 STMicroelectronics</center></h2>
+  * Copyright (c) 2014 STMicroelectronics.
+  * All rights reserved.
   *
-  * Licensed under MCD-ST Liberty SW License Agreement V2, (the "License");
-  * You may not use this file except in compliance with the License.
-  * You may obtain a copy of the License at:
-  *
-  *        http://www.st.com/software_license_agreement_liberty_v2
-  *
-  * Unless required by applicable law or agreed to in writing, software 
-  * distributed under the License is distributed on an "AS IS" BASIS, 
-  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  * See the License for the specific language governing permissions and
-  * limitations under the License.
+  * This software is licensed under terms that can be found in the LICENSE file
+  * in the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
   *
   ******************************************************************************
   */
@@ -54,6 +47,7 @@
   */ 
 
 /** @defgroup PWR_PVD_detection_level 
+  * @brief    This parameters are only applicable for STM32F051 and STM32F072 devices
   * @{
   */ 
 
@@ -80,8 +74,16 @@
 
 #define PWR_WakeUpPin_1                 PWR_CSR_EWUP1
 #define PWR_WakeUpPin_2                 PWR_CSR_EWUP2
-#define IS_PWR_WAKEUP_PIN(PIN) (((PIN) == PWR_WakeUpPin_1) || \
-                                ((PIN) == PWR_WakeUpPin_2))
+#define PWR_WakeUpPin_3                 PWR_CSR_EWUP3 /*!< only applicable for STM32F072 devices */
+#define PWR_WakeUpPin_4                 PWR_CSR_EWUP4 /*!< only applicable for STM32F072 devices */
+#define PWR_WakeUpPin_5                 PWR_CSR_EWUP5 /*!< only applicable for STM32F072 devices */
+#define PWR_WakeUpPin_6                 PWR_CSR_EWUP6 /*!< only applicable for STM32F072 devices */
+#define PWR_WakeUpPin_7                 PWR_CSR_EWUP7 /*!< only applicable for STM32F072 devices */
+#define PWR_WakeUpPin_8                 PWR_CSR_EWUP8 /*!< only applicable for STM32F072 devices */
+#define IS_PWR_WAKEUP_PIN(PIN) (((PIN) == PWR_WakeUpPin_1) || ((PIN) == PWR_WakeUpPin_2) || \
+                                ((PIN) == PWR_WakeUpPin_3) || ((PIN) == PWR_WakeUpPin_4) || \
+                                ((PIN) == PWR_WakeUpPin_5) || ((PIN) == PWR_WakeUpPin_6) || \
+                                ((PIN) == PWR_WakeUpPin_7) || ((PIN) == PWR_WakeUpPin_8))
 /**
   * @}
   */
@@ -117,7 +119,9 @@
 
 #define PWR_STOPEntry_WFI               ((uint8_t)0x01)
 #define PWR_STOPEntry_WFE               ((uint8_t)0x02)
-#define IS_PWR_STOP_ENTRY(ENTRY) (((ENTRY) == PWR_STOPEntry_WFI) || ((ENTRY) == PWR_STOPEntry_WFE))
+#define PWR_STOPEntry_SLEEPONEXIT       ((uint8_t)0x03)
+#define IS_PWR_STOP_ENTRY(ENTRY) (((ENTRY) == PWR_STOPEntry_WFI) || ((ENTRY) == PWR_STOPEntry_WFE) ||\
+                                  ((ENTRY) == PWR_STOPEntry_SLEEPONEXIT))
  
 /**
   * @}
@@ -129,8 +133,8 @@
 
 #define PWR_FLAG_WU                     PWR_CSR_WUF
 #define PWR_FLAG_SB                     PWR_CSR_SBF
-#define PWR_FLAG_PVDO                   PWR_CSR_PVDO
-#define PWR_FLAG_VREFINTRDY             PWR_CSR_VREFINTRDYF
+#define PWR_FLAG_PVDO                   PWR_CSR_PVDO /*!< Not applicable for STM32F030 devices */
+#define PWR_FLAG_VREFINTRDY             PWR_CSR_VREFINTRDYF 
 
 #define IS_PWR_GET_FLAG(FLAG) (((FLAG) == PWR_FLAG_WU) || ((FLAG) == PWR_FLAG_SB) || \
                                ((FLAG) == PWR_FLAG_PVDO) || ((FLAG) == PWR_FLAG_VREFINTRDY))
@@ -154,8 +158,8 @@ void PWR_DeInit(void);
 void PWR_BackupAccessCmd(FunctionalState NewState);
 
 /* PVD configuration functions ************************************************/
-void PWR_PVDLevelConfig(uint32_t PWR_PVDLevel);
-void PWR_PVDCmd(FunctionalState NewState);
+void PWR_PVDLevelConfig(uint32_t PWR_PVDLevel); /*!< only applicable for STM32F051 and STM32F072 devices */
+void PWR_PVDCmd(FunctionalState NewState); /*!< only applicable for STM32F051 and STM32F072 devices */
 
 /* WakeUp pins configuration functions ****************************************/
 void PWR_WakeUpPinCmd(uint32_t PWR_WakeUpPin, FunctionalState NewState);
@@ -183,4 +187,3 @@ void PWR_ClearFlag(uint32_t PWR_FLAG);
   * @}
   */
 
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

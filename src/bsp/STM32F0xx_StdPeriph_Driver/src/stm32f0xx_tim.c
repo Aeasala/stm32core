@@ -2,8 +2,8 @@
   ******************************************************************************
   * @file    stm32f0xx_tim.c
   * @author  MCD Application Team
-  * @version V1.0.1
-  * @date    20-April-2012
+  * @version V1.5.1
+  * @date    13-October-2021
   * @brief   This file provides firmware functions to manage the following 
   *          functionalities of the TIM peripheral:
   *            + TimeBase management
@@ -96,19 +96,12 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; COPYRIGHT 2012 STMicroelectronics</center></h2>
+  * Copyright (c) 2014 STMicroelectronics.
+  * All rights reserved.
   *
-  * Licensed under MCD-ST Liberty SW License Agreement V2, (the "License");
-  * You may not use this file except in compliance with the License.
-  * You may obtain a copy of the License at:
-  *
-  *        http://www.st.com/software_license_agreement_liberty_v2
-  *
-  * Unless required by applicable law or agreed to in writing, software 
-  * distributed under the License is distributed on an "AS IS" BASIS, 
-  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  * See the License for the specific language governing permissions and
-  * limitations under the License.
+  * This software is licensed under terms that can be found in the LICENSE file
+  * in the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
   *
   ******************************************************************************
   */
@@ -184,7 +177,10 @@ static void TI4_Config(TIM_TypeDef* TIMx, uint16_t TIM_ICPolarity, uint16_t TIM_
 
 /**
   * @brief  Deinitializes the TIMx peripheral registers to their default reset values.
-  * @param  TIMx: where x can be 1, 2, 3, 6, 14, 15, 16 and 17 to select the TIM peripheral.
+  * @param  TIMx: where x can be 1, 2, 3, 6, 7, 14, 15, 16 and 17 to select the TIM peripheral.
+  * @note   TIM7 is applicable only for STM32F072 devices
+  * @note   TIM6 is not applivable for STM32F031 devices.
+  * @note   TIM2 is not applicable for STM32F030 devices.    
   * @retval None
   *   
   */
@@ -213,6 +209,11 @@ void TIM_DeInit(TIM_TypeDef* TIMx)
     RCC_APB1PeriphResetCmd(RCC_APB1Periph_TIM6, ENABLE);
     RCC_APB1PeriphResetCmd(RCC_APB1Periph_TIM6, DISABLE);
   } 
+  else if (TIMx == TIM7)
+  {
+    RCC_APB1PeriphResetCmd(RCC_APB1Periph_TIM7, ENABLE);
+    RCC_APB1PeriphResetCmd(RCC_APB1Periph_TIM7, DISABLE);
+  }
   else if (TIMx == TIM14) 
   {       
     RCC_APB1PeriphResetCmd(RCC_APB1Periph_TIM14, ENABLE);
@@ -242,8 +243,11 @@ void TIM_DeInit(TIM_TypeDef* TIMx)
 /**
   * @brief  Initializes the TIMx Time Base Unit peripheral according to 
   *         the specified parameters in the TIM_TimeBaseInitStruct.
-  * @param  TIMx: where x can be 1, 2, 3, 6, 14, 15, 16 and 17 to select the TIM 
+  * @param  TIMx: where x can be 1, 2, 3, 6, 7, 14, 15, 16 and 17 to select the TIM 
   *         peripheral.
+  * @note   TIM7 is applicable only for STM32F072 devices
+  * @note   TIM6 is not applivable for STM32F031 devices.
+  * @note   TIM2 is not applicable for STM32F030 devices.  
   * @param  TIM_TimeBaseInitStruct: pointer to a TIM_TimeBaseInitTypeDef
   *         structure that contains the configuration information for
   *         the specified TIM peripheral.
@@ -311,7 +315,10 @@ void TIM_TimeBaseStructInit(TIM_TimeBaseInitTypeDef* TIM_TimeBaseInitStruct)
 
 /**
   * @brief  Configures the TIMx Prescaler.
-  * @param  TIMx: where x can be 1, 2, 3, 6, 14, 15, 16 and 17 to select the TIM peripheral.
+  * @param  TIMx: where x can be 1, 2, 3, 6, 7, 14, 15, 16 and 17 to select the TIM peripheral.
+  * @note   TIM7 is applicable only for STM32F072 devices
+  * @note   TIM6 is not applivable for STM32F031 devices.
+  * @note   TIM2 is not applicable for STM32F030 devices.    
   * @param  Prescaler: specifies the Prescaler Register value
   * @param  TIM_PSCReloadMode: specifies the TIM Prescaler Reload mode
   *          This parameter can be one of the following values:
@@ -334,6 +341,7 @@ void TIM_PrescalerConfig(TIM_TypeDef* TIMx, uint16_t Prescaler, uint16_t TIM_PSC
 /**
   * @brief  Specifies the TIMx Counter Mode to be used.
   * @param  TIMx: where x can be 1, 2, or 3 to select the TIM peripheral.
+  * @note   TIM2 is not applicable for STM32F030 devices.  
   * @param  TIM_CounterMode: specifies the Counter Mode to be used
   *          This parameter can be one of the following values:
   *            @arg TIM_CounterMode_Up: TIM Up Counting Mode
@@ -362,8 +370,11 @@ void TIM_CounterModeConfig(TIM_TypeDef* TIMx, uint16_t TIM_CounterMode)
 
 /**
   * @brief  Sets the TIMx Counter Register value
-  * @param  TIMx: where x can be 1, 2, 3, 6, 14, 15, 16 and 17 to select the TIM 
+  * @param  TIMx: where x can be 1, 2, 3, 6, 7, 14, 15, 16 and 17 to select the TIM 
   *          peripheral.
+  * @note   TIM7 is applicable only for STM32F072 devices
+  * @note   TIM6 is not applivable for STM32F031 devices.
+  * @note   TIM2 is not applicable for STM32F030 devices.    
   * @param  Counter: specifies the Counter register new value.
   * @retval None
   */
@@ -378,7 +389,10 @@ void TIM_SetCounter(TIM_TypeDef* TIMx, uint32_t Counter)
 
 /**
   * @brief  Sets the TIMx Autoreload Register value
-  * @param  TIMx: where x can be 1, 2, 3, 6, 14, 15, 16 and 17 to select the TIM peripheral.
+  * @param  TIMx: where x can be 1, 2, 3, 6, 7, 14, 15, 16 and 17 to select the TIM peripheral.
+  * @note   TIM7 is applicable only for STM32F072 devices
+  * @note   TIM6 is not applivable for STM32F031 devices.
+  * @note   TIM2 is not applicable for STM32F030 devices.    
   * @param  Autoreload: specifies the Autoreload register new value.
   * @retval None
   */
@@ -393,8 +407,11 @@ void TIM_SetAutoreload(TIM_TypeDef* TIMx, uint32_t Autoreload)
 
 /**
   * @brief  Gets the TIMx Counter value.
-  * @param  TIMx: where x can be 1, 2, 3, 6, 14, 15, 16 and 17 to select the TIM 
+  * @param  TIMx: where x can be 1, 2, 3, 6, 7, 14, 15, 16 and 17 to select the TIM 
   *         peripheral.
+  * @note   TIM7 is applicable only for STM32F072 devices
+  * @note   TIM6 is not applivable for STM32F031 devices.
+  * @note   TIM2 is not applicable for STM32F030 devices.    
   * @retval Counter Register value.
   */
 uint32_t TIM_GetCounter(TIM_TypeDef* TIMx)
@@ -408,8 +425,11 @@ uint32_t TIM_GetCounter(TIM_TypeDef* TIMx)
 
 /**
   * @brief  Gets the TIMx Prescaler value.
-  * @param  TIMx: where x can be 1, 2, 3, 6, 14, 15, 16 and 17 to select the TIM 
+  * @param  TIMx: where x can be 1, 2, 3, 6, 7, 14, 15, 16 and 17 to select the TIM 
   *         peripheral.
+  * @note   TIM7 is applicable only for STM32F072 devices
+  * @note   TIM6 is not applivable for STM32F031 devices.
+  * @note   TIM2 is not applicable for STM32F030 devices.    
   * @retval Prescaler Register value.
   */
 uint16_t TIM_GetPrescaler(TIM_TypeDef* TIMx)
@@ -423,8 +443,11 @@ uint16_t TIM_GetPrescaler(TIM_TypeDef* TIMx)
 
 /**
   * @brief  Enables or Disables the TIMx Update event.
-  * @param  TIMx: where x can be 1, 2, 3, 6, 14, 15, 16 and 17 to select the TIM 
+  * @param  TIMx: where x can be 1, 2, 3, 6, 7, 14, 15, 16 and 17 to select the TIM 
   *         peripheral.
+  * @note   TIM7 is applicable only for STM32F072 devices
+  * @note   TIM6 is not applivable for STM32F031 devices.
+  * @note   TIM2 is not applicable for STM32F030 devices.    
   * @param  NewState: new state of the TIMx UDIS bit
   *          This parameter can be: ENABLE or DISABLE.
   * @retval None
@@ -449,8 +472,11 @@ void TIM_UpdateDisableConfig(TIM_TypeDef* TIMx, FunctionalState NewState)
 
 /**
   * @brief  Configures the TIMx Update Request Interrupt source.
-  * @param  TIMx: where x can be 1, 2, 3, 6, 14, 15, 16 and 17 to select the TIM 
+  * @param  TIMx: where x can be 1, 2, 3, 6, 7, 14, 15, 16 and 17 to select the TIM 
   *         peripheral.
+  * @note   TIM7 is applicable only for STM32F072 devices
+  * @note   TIM6 is not applivable for STM32F031 devices.
+  * @note   TIM2 is not applicable for STM32F030 devices.    
   * @param  TIM_UpdateSource: specifies the Update source.
   *          This parameter can be one of the following values:
   *            @arg TIM_UpdateSource_Regular: Source of update is the counter
@@ -479,8 +505,11 @@ void TIM_UpdateRequestConfig(TIM_TypeDef* TIMx, uint16_t TIM_UpdateSource)
 
 /**
   * @brief  Enables or disables TIMx peripheral Preload register on ARR.
-  * @param  TIMx: where x can be  1, 2, 3, 6, 14, 15, 16 and 17 to select the TIM 
+  * @param  TIMx: where x can be  1, 2, 3, 6, 7, 14, 15, 16 and 17 to select the TIM 
   *         peripheral.
+  * @note   TIM7 is applicable only for STM32F072 devices
+  * @note   TIM6 is not applivable for STM32F031 devices.
+  * @note   TIM2 is not applicable for STM32F030 devices.  
   * @param  NewState: new state of the TIMx peripheral Preload register
   *          This parameter can be: ENABLE or DISABLE.
   * @retval None
@@ -505,8 +534,11 @@ void TIM_ARRPreloadConfig(TIM_TypeDef* TIMx, FunctionalState NewState)
 
 /**
   * @brief  Selects the TIMx's One Pulse Mode.
-  * @param  TIMx: where x can be 1, 2, 3, 6, 14, 15, 16 and 17 to select the TIM 
+  * @param  TIMx: where x can be 1, 2, 3, 6, 7, 14, 15, 16 and 17 to select the TIM 
   *         peripheral.
+  * @note   TIM7 is applicable only for STM32F072 devices
+  * @note   TIM6 is not applivable for STM32F031 devices.
+  * @note   TIM2 is not applicable for STM32F030 devices.    
   * @param  TIM_OPMode: specifies the OPM Mode to be used.
   *          This parameter can be one of the following values:
   *            @arg TIM_OPMode_Single
@@ -528,6 +560,7 @@ void TIM_SelectOnePulseMode(TIM_TypeDef* TIMx, uint16_t TIM_OPMode)
 /**
   * @brief  Sets the TIMx Clock Division value.
   * @param  TIMx: where x can be  1, 2, 3, 14, 15, 16 and 17 to select the TIM peripheral.
+  * @note   TIM2 is not applicable for STM32F030 devices.  
   * @param  TIM_CKD: specifies the clock division value.
   *          This parameter can be one of the following value:
   *            @arg TIM_CKD_DIV1: TDTS = Tck_tim
@@ -549,8 +582,11 @@ void TIM_SetClockDivision(TIM_TypeDef* TIMx, uint16_t TIM_CKD)
 
 /**
   * @brief  Enables or disables the specified TIM peripheral.
-  * @param  TIMx: where x can be 1, 2, 3, 6, 14, 15, 16 and 17to select the TIMx
+  * @param  TIMx: where x can be 1, 2, 3, 6, 7, 14, 15, 16 and 17to select the TIMx
   *         peripheral.
+  * @note   TIM7 is applicable only for STM32F072 devices
+  * @note   TIM6 is not applivable for STM32F031 devices.
+  * @note   TIM2 is not applicable for STM32F030 devices.    
   * @param  NewState: new state of the TIMx peripheral.
   *          This parameter can be: ENABLE or DISABLE.
   * @retval None
@@ -723,6 +759,7 @@ void TIM_CtrlPWMOutputs(TIM_TypeDef* TIMx, FunctionalState NewState)
   * @brief  Initializes the TIMx Channel1 according to the specified
   *         parameters in the TIM_OCInitStruct.
   * @param  TIMx: where x can be 1, 2, 3, 14, 15, 16 and 17 to select the TIM peripheral.
+  * @note   TIM2 is not applicable for STM32F030 devices.  
   * @param  TIM_OCInitStruct: pointer to a TIM_OCInitTypeDef structure
   *         that contains the configuration information for the specified TIM 
   *         peripheral.
@@ -805,6 +842,7 @@ void TIM_OC1Init(TIM_TypeDef* TIMx, TIM_OCInitTypeDef* TIM_OCInitStruct)
   * @brief  Initializes the TIMx Channel2 according to the specified
   *         parameters in the TIM_OCInitStruct.
   * @param  TIMx: where x can be 1, 2, 3 or 15 to select the TIM peripheral.
+  * @note   TIM2 is not applicable for STM32F030 devices.  
   * @param  TIM_OCInitStruct: pointer to a TIM_OCInitTypeDef structure
   *         that contains the configuration information for the specified TIM 
   *         peripheral.
@@ -845,31 +883,40 @@ void TIM_OC2Init(TIM_TypeDef* TIMx, TIM_OCInitTypeDef* TIM_OCInitStruct)
   /* Set the Output State */
   tmpccer |= (uint16_t)(TIM_OCInitStruct->TIM_OutputState << 4);
     
-  if(TIMx == TIM1)
+  if((TIMx == TIM1) || (TIMx == TIM15))
   {
-    assert_param(IS_TIM_OUTPUTN_STATE(TIM_OCInitStruct->TIM_OutputNState));
-    assert_param(IS_TIM_OCN_POLARITY(TIM_OCInitStruct->TIM_OCNPolarity));
-    assert_param(IS_TIM_OCNIDLE_STATE(TIM_OCInitStruct->TIM_OCNIdleState));
+    /* Check the parameters */
     assert_param(IS_TIM_OCIDLE_STATE(TIM_OCInitStruct->TIM_OCIdleState));
     
-    /* Reset the Output N Polarity level */
-    tmpccer &= (uint16_t)(~((uint16_t)TIM_CCER_CC2NP));
-    /* Set the Output N Polarity */
-    tmpccer |= (uint16_t)(TIM_OCInitStruct->TIM_OCNPolarity << 4);
-    
-    /* Reset the Output N State */
-    tmpccer &= (uint16_t)(~((uint16_t)TIM_CCER_CC2NE));    
-    /* Set the Output N State */
-    tmpccer |= (uint16_t)(TIM_OCInitStruct->TIM_OutputNState << 4);
-    
-    /* Reset the Ouput Compare and Output Compare N IDLE State */
+    /* Reset the Ouput Compare State */
     tmpcr2 &= (uint16_t)(~((uint16_t)TIM_CR2_OIS2));
-    tmpcr2 &= (uint16_t)(~((uint16_t)TIM_CR2_OIS2N));
     
     /* Set the Output Idle state */
     tmpcr2 |= (uint16_t)(TIM_OCInitStruct->TIM_OCIdleState << 2);
-    /* Set the Output N Idle state */
-    tmpcr2 |= (uint16_t)(TIM_OCInitStruct->TIM_OCNIdleState << 2);
+    
+    if (TIMx == TIM1)
+    {    
+      /* Check the parameters */
+      assert_param(IS_TIM_OUTPUTN_STATE(TIM_OCInitStruct->TIM_OutputNState));
+      assert_param(IS_TIM_OCN_POLARITY(TIM_OCInitStruct->TIM_OCNPolarity));
+      assert_param(IS_TIM_OCNIDLE_STATE(TIM_OCInitStruct->TIM_OCNIdleState));
+      
+      /* Reset the Output N Polarity level */
+      tmpccer &= (uint16_t)(~((uint16_t)TIM_CCER_CC2NP));
+      /* Set the Output N Polarity */
+      tmpccer |= (uint16_t)(TIM_OCInitStruct->TIM_OCNPolarity << 4);
+      
+      /* Reset the Output N State */
+      tmpccer &= (uint16_t)(~((uint16_t)TIM_CCER_CC2NE));    
+      /* Set the Output N State */
+      tmpccer |= (uint16_t)(TIM_OCInitStruct->TIM_OutputNState << 4);
+      
+      /* Reset the Output Compare N IDLE State */
+      tmpcr2 &= (uint16_t)(~((uint16_t)TIM_CR2_OIS2N));
+      
+      /* Set the Output N Idle state */
+      tmpcr2 |= (uint16_t)(TIM_OCInitStruct->TIM_OCNIdleState << 2);
+    }
   }
   /* Write to TIMx CR2 */
   TIMx->CR2 = tmpcr2;
@@ -888,6 +935,7 @@ void TIM_OC2Init(TIM_TypeDef* TIMx, TIM_OCInitTypeDef* TIM_OCInitStruct)
   * @brief  Initializes the TIMx Channel3 according to the specified
   *         parameters in the TIM_OCInitStruct.
   * @param  TIMx: where x can be 1, 2 or 3 to select the TIM peripheral.
+  * @note   TIM2 is not applicable for STM32F030 devices.  
   * @param  TIM_OCInitStruct: pointer to a TIM_OCInitTypeDef structure
   *         that contains the configuration information for the specified TIM 
   *         peripheral.
@@ -968,6 +1016,7 @@ void TIM_OC3Init(TIM_TypeDef* TIMx, TIM_OCInitTypeDef* TIM_OCInitStruct)
   * @brief  Initializes the TIMx Channel4 according to the specified
   *         parameters in the TIM_OCInitStruct.
   * @param  TIMx: where x can be 1, 2 or 3 to select the TIM peripheral.
+  * @note   TIM2 is not applicable for STM32F030 devices.  
   * @param  TIM_OCInitStruct: pointer to a TIM_OCInitTypeDef structure
   *         that contains the configuration information for the specified TIM 
   *         peripheral.
@@ -1054,6 +1103,7 @@ void TIM_OCStructInit(TIM_OCInitTypeDef* TIM_OCInitStruct)
   *         Compare Mode.
   *         User has to enable this channel using TIM_CCxCmd and TIM_CCxNCmd functions.
   * @param  TIMx: where x can be 1, 2, 3, 14, 15, 16 or 17 to select the TIM peripheral.
+  * @note   TIM2 is not applicable for STM32F030 devices.  
   * @param  TIM_Channel: specifies the TIM Channel
   *          This parameter can be one of the following values:
   *            @arg TIM_Channel_1: TIM Channel 1
@@ -1113,6 +1163,7 @@ void TIM_SelectOCxM(TIM_TypeDef* TIMx, uint16_t TIM_Channel, uint16_t TIM_OCMode
 /**
   * @brief  Sets the TIMx Capture Compare1 Register value
   * @param  TIMx: where x can be 1, 2, 3, 14, 15, 16 or 17 to select the TIM peripheral.
+  * @note   TIM2 is not applicable for STM32F030 devices.  
   * @param  Compare1: specifies the Capture Compare1 register new value.
   * @retval None
   */
@@ -1128,6 +1179,7 @@ void TIM_SetCompare1(TIM_TypeDef* TIMx, uint32_t Compare1)
 /**
   * @brief  Sets the TIMx Capture Compare2 Register value
   * @param  TIMx: where x can be 1, 2, 3 or 15 to select the TIM peripheral.
+  * @note   TIM2 is not applicable for STM32F030 devices.  
   * @param  Compare2: specifies the Capture Compare2 register new value.
   * @retval None
   */
@@ -1158,6 +1210,7 @@ void TIM_SetCompare3(TIM_TypeDef* TIMx, uint32_t Compare3)
 /**
   * @brief  Sets the TIMx Capture Compare4 Register value
   * @param  TIMx: where x can be 1, 2 or 3 to select the TIM peripheral.
+  * @note   TIM2 is not applicable for STM32F030 devices.    
   * @param  Compare4: specifies the Capture Compare4 register new value.
   * @retval None
   */
@@ -1173,6 +1226,7 @@ void TIM_SetCompare4(TIM_TypeDef* TIMx, uint32_t Compare4)
 /**
   * @brief  Forces the TIMx output 1 waveform to active or inactive level.
   * @param  TIMx: where x can be 1, 2, 3, 14, 15, 16 or 17 to select the TIM peripheral.
+  * @note   TIM2 is not applicable for STM32F030 devices.  
   * @param  TIM_ForcedAction: specifies the forced Action to be set to the output waveform.
   *          This parameter can be one of the following values:
   *            @arg TIM_ForcedAction_Active: Force active level on OC1REF
@@ -1197,6 +1251,7 @@ void TIM_ForcedOC1Config(TIM_TypeDef* TIMx, uint16_t TIM_ForcedAction)
 /**
   * @brief  Forces the TIMx output 2 waveform to active or inactive level.
   * @param  TIMx: where x can be 1, 2, 3, or 15 to select the TIM peripheral.
+  * @note   TIM2 is not applicable for STM32F030 devices.  
   * @param  TIM_ForcedAction: specifies the forced Action to be set to the output waveform.
   *          This parameter can be one of the following values:
   *            @arg TIM_ForcedAction_Active: Force active level on OC2REF
@@ -1223,6 +1278,7 @@ void TIM_ForcedOC2Config(TIM_TypeDef* TIMx, uint16_t TIM_ForcedAction)
 /**
   * @brief  Forces the TIMx output 3 waveform to active or inactive level.
   * @param  TIMx: where x can be 1, 2 or 3 to select the TIM peripheral.
+  * @note   TIM2 is not applicable for STM32F030 devices.  
   * @param  TIM_ForcedAction: specifies the forced Action to be set to the output waveform.
   *          This parameter can be one of the following values:
   *            @arg TIM_ForcedAction_Active: Force active level on OC3REF
@@ -1249,6 +1305,7 @@ void TIM_ForcedOC3Config(TIM_TypeDef* TIMx, uint16_t TIM_ForcedAction)
 /**
   * @brief  Forces the TIMx output 4 waveform to active or inactive level.
   * @param  TIMx: where x can be 1, 2 or 3 to select the TIM peripheral.
+  * @note   TIM2 is not applicable for STM32F030 devices.  
   * @param  TIM_ForcedAction: specifies the forced Action to be set to the output waveform.
   *          This parameter can be one of the following values:
   *            @arg TIM_ForcedAction_Active: Force active level on OC4REF
@@ -1274,6 +1331,7 @@ void TIM_ForcedOC4Config(TIM_TypeDef* TIMx, uint16_t TIM_ForcedAction)
 /**
   * @brief  Sets or Resets the TIM peripheral Capture Compare Preload Control bit.
   * @param  TIMx: where x can be 1, 2, 3 or 15 to select the TIMx peripheral
+  * @note   TIM2 is not applicable for STM32F030 devices.  
   * @param  NewState: new state of the Capture Compare Preload Control bit
   *          This parameter can be: ENABLE or DISABLE.
   * @retval None
@@ -1299,6 +1357,7 @@ void TIM_CCPreloadControl(TIM_TypeDef* TIMx, FunctionalState NewState)
 /**
   * @brief  Enables or disables the TIMx peripheral Preload register on CCR1.
   * @param  TIMx: where x can be 1, 2, 3, 14, 15, 16 and 17 to select the TIM peripheral.
+  * @note   TIM2 is not applicable for STM32F030 devices.  
   * @param  TIM_OCPreload: new state of the TIMx peripheral Preload register
   *          This parameter can be one of the following values:
   *            @arg TIM_OCPreload_Enable
@@ -1324,6 +1383,7 @@ void TIM_OC1PreloadConfig(TIM_TypeDef* TIMx, uint16_t TIM_OCPreload)
 /**
   * @brief  Enables or disables the TIMx peripheral Preload register on CCR2.
   * @param  TIMx: where x can be 1, 2, 3 and 15 to select the TIM peripheral.
+  * @note   TIM2 is not applicable for STM32F030 devices.  
   * @param  TIM_OCPreload: new state of the TIMx peripheral Preload register
   *          This parameter can be one of the following values:
   *            @arg TIM_OCPreload_Enable
@@ -1349,6 +1409,7 @@ void TIM_OC2PreloadConfig(TIM_TypeDef* TIMx, uint16_t TIM_OCPreload)
 /**
   * @brief  Enables or disables the TIMx peripheral Preload register on CCR3.
   * @param  TIMx: where x can be 1, 2 or 3 to select the TIM peripheral.
+  * @note   TIM2 is not applicable for STM32F030 devices.  
   * @param  TIM_OCPreload: new state of the TIMx peripheral Preload register
   *          This parameter can be one of the following values:
   *            @arg TIM_OCPreload_Enable
@@ -1375,6 +1436,7 @@ void TIM_OC3PreloadConfig(TIM_TypeDef* TIMx, uint16_t TIM_OCPreload)
 /**
   * @brief  Enables or disables the TIMx peripheral Preload register on CCR4.
   * @param  TIMx: where x can be 1, 2 or 3 to select the TIM peripheral.
+  * @note   TIM2 is not applicable for STM32F030 devices.  
   * @param  TIM_OCPreload: new state of the TIMx peripheral Preload register
   *          This parameter can be one of the following values:
   *            @arg TIM_OCPreload_Enable
@@ -1401,6 +1463,7 @@ void TIM_OC4PreloadConfig(TIM_TypeDef* TIMx, uint16_t TIM_OCPreload)
 /**
   * @brief  Configures the TIMx Output Compare 1 Fast feature.
   * @param  TIMx: where x can be 1, 2, 3, 14, 15, 16 or 17 to select the TIM peripheral.
+  * @note   TIM2 is not applicable for STM32F030 devices.
   * @param  TIM_OCFast: new state of the Output Compare Fast Enable Bit.
   *          This parameter can be one of the following values:
   *            @arg TIM_OCFast_Enable: TIM output compare fast enable
@@ -1428,6 +1491,7 @@ void TIM_OC1FastConfig(TIM_TypeDef* TIMx, uint16_t TIM_OCFast)
 /**
   * @brief  Configures the TIMx Output Compare 2 Fast feature.
   * @param  TIMx: where x can be 1, 2, 3 or 15 to select the TIM peripheral.
+  * @note   TIM2 is not applicable for STM32F030 devices.  
   * @param  TIM_OCFast: new state of the Output Compare Fast Enable Bit.
   *          This parameter can be one of the following values:
   *            @arg TIM_OCFast_Enable: TIM output compare fast enable
@@ -1455,6 +1519,7 @@ void TIM_OC2FastConfig(TIM_TypeDef* TIMx, uint16_t TIM_OCFast)
 /**
   * @brief  Configures the TIMx Output Compare 3 Fast feature.
   * @param  TIMx: where x can be 1, 2 or 3 to select the TIM peripheral.
+  * @note   TIM2 is not applicable for STM32F030 devices.  
   * @param  TIM_OCFast: new state of the Output Compare Fast Enable Bit.
   *          This parameter can be one of the following values:
   *            @arg TIM_OCFast_Enable: TIM output compare fast enable
@@ -1482,6 +1547,7 @@ void TIM_OC3FastConfig(TIM_TypeDef* TIMx, uint16_t TIM_OCFast)
 /**
   * @brief  Configures the TIMx Output Compare 4 Fast feature.
   * @param  TIMx: where x can be 1, 2 or 3 to select the TIM peripheral.
+  * @note   TIM2 is not applicable for STM32F030 devices.  
   * @param  TIM_OCFast: new state of the Output Compare Fast Enable Bit.
   *          This parameter can be one of the following values:
   *            @arg TIM_OCFast_Enable: TIM output compare fast enable
@@ -1509,6 +1575,7 @@ void TIM_OC4FastConfig(TIM_TypeDef* TIMx, uint16_t TIM_OCFast)
 /**
   * @brief  Clears or safeguards the OCREF1 signal on an external event
   * @param  TIMx: where x can be 1, 2, 3, 14, 15, 16 or 17 to select the TIM peripheral.
+  * @note   TIM2 is not applicable for STM32F030 devices.  
   * @param  TIM_OCClear: new state of the Output Compare Clear Enable Bit.
   *          This parameter can be one of the following values:
   *            @arg TIM_OCClear_Enable: TIM Output clear enable
@@ -1535,6 +1602,7 @@ void TIM_ClearOC1Ref(TIM_TypeDef* TIMx, uint16_t TIM_OCClear)
 /**
   * @brief  Clears or safeguards the OCREF2 signal on an external event
   * @param  TIMx: where x can be 1, 2, 3 or 15 to select the TIM peripheral.
+  * @note   TIM2 is not applicable for STM32F030 devices.  
   * @param  TIM_OCClear: new state of the Output Compare Clear Enable Bit.
   *          This parameter can be one of the following values:
   *            @arg TIM_OCClear_Enable: TIM Output clear enable
@@ -1561,6 +1629,7 @@ void TIM_ClearOC2Ref(TIM_TypeDef* TIMx, uint16_t TIM_OCClear)
 /**
   * @brief  Clears or safeguards the OCREF3 signal on an external event
   * @param  TIMx: where x can be 1, 2 or 3 to select the TIM peripheral.
+  * @note   TIM2 is not applicable for STM32F030 devices.  
   * @param  TIM_OCClear: new state of the Output Compare Clear Enable Bit.
   *          This parameter can be one of the following values:
   *            @arg TIM_OCClear_Enable: TIM Output clear enable
@@ -1587,6 +1656,7 @@ void TIM_ClearOC3Ref(TIM_TypeDef* TIMx, uint16_t TIM_OCClear)
 /**
   * @brief  Clears or safeguards the OCREF4 signal on an external event
   * @param  TIMx: where x can be 1, 2 or 3 to select the TIM peripheral.
+  * @note   TIM2 is not applicable for STM32F030 devices.  
   * @param  TIM_OCClear: new state of the Output Compare Clear Enable Bit.
   *          This parameter can be one of the following values:
   *            @arg TIM_OCClear_Enable: TIM Output clear enable
@@ -1613,6 +1683,7 @@ void TIM_ClearOC4Ref(TIM_TypeDef* TIMx, uint16_t TIM_OCClear)
 /**
   * @brief  Configures the TIMx channel 1 polarity.
   * @param  TIMx: where x can be 1, 2, 3, 14, 15, 16 or 17 to select the TIM peripheral.
+  * @note   TIM2 is not applicable for STM32F030 devices.  
   * @param  TIM_OCPolarity: specifies the OC1 Polarity
   *          This parmeter can be one of the following values:
   *            @arg TIM_OCPolarity_High: Output Compare active high
@@ -1662,6 +1733,7 @@ void TIM_OC1NPolarityConfig(TIM_TypeDef* TIMx, uint16_t TIM_OCNPolarity)
 /**
   * @brief  Configures the TIMx channel 2 polarity.
   * @param  TIMx: where x can be 1, 2, 3, or 15 to select the TIM peripheral.
+  * @note   TIM2 is not applicable for STM32F030 devices.  
   * @param  TIM_OCPolarity: specifies the OC2 Polarity
   *          This parmeter can be one of the following values:
   *            @arg TIM_OCPolarity_High: Output Compare active high
@@ -1711,6 +1783,7 @@ void TIM_OC2NPolarityConfig(TIM_TypeDef* TIMx, uint16_t TIM_OCNPolarity)
 /**
   * @brief  Configures the TIMx channel 3 polarity.
   * @param  TIMx: where x can be 1, 2 or 3 to select the TIM peripheral.
+  * @note   TIM2 is not applicable for STM32F030 devices.  
   * @param  TIM_OCPolarity: specifies the OC3 Polarity
   *          This parmeter can be one of the following values:
   *            @arg TIM_OCPolarity_High: Output Compare active high
@@ -1761,6 +1834,7 @@ void TIM_OC3NPolarityConfig(TIM_TypeDef* TIMx, uint16_t TIM_OCNPolarity)
 /**
   * @brief  Configures the TIMx channel 4 polarity.
   * @param  TIMx: where x can be 1, 2 or 3 to select the TIM peripheral.
+  * @note   TIM2 is not applicable for STM32F030 devices.  
   * @param  TIM_OCPolarity: specifies the OC4 Polarity
   *          This parmeter can be one of the following values:
   *            @arg TIM_OCPolarity_High: Output Compare active high
@@ -1786,6 +1860,7 @@ void TIM_OC4PolarityConfig(TIM_TypeDef* TIMx, uint16_t TIM_OCPolarity)
 /**
   * @brief  Selects the OCReference Clear source.
   * @param  TIMx: where x can be 1, 2 or 3 to select the TIM peripheral.
+  * @note   TIM2 is not applicable for STM32F030 devices.  
   * @param  TIM_OCReferenceClear: specifies the OCReference Clear source.
   *          This parameter can be one of the following values:
   *            @arg TIM_OCReferenceClear_ETRF: The internal OCreference clear input is connected to ETRF.
@@ -1806,6 +1881,7 @@ void TIM_SelectOCREFClear(TIM_TypeDef* TIMx, uint16_t TIM_OCReferenceClear)
 /**
   * @brief  Enables or disables the TIM Capture Compare Channel x.
   * @param  TIMx: where x can be 1, 2, 3, 14, 15, 16 or 17 to select the TIM peripheral.
+  * @note   TIM2 is not applicable for STM32F030 devices.
   * @param  TIM_Channel: specifies the TIM Channel
   *          This parameter can be one of the following values:
   *            @arg TIM_Channel_1: TIM Channel 1
@@ -1941,6 +2017,7 @@ void TIM_SelectCOM(TIM_TypeDef* TIMx, FunctionalState NewState)
   * @brief  Initializes the TIM peripheral according to the specified
   *         parameters in the TIM_ICInitStruct.
   * @param  TIMx: where x can be 1, 2, 3, 14, 15, 16 or 17 to select the TIM peripheral.
+  * @note   TIM2 is not applicable for STM32F030 devices.
   * @param  TIM_ICInitStruct: pointer to a TIM_ICInitTypeDef structure
   *         that contains the configuration information for the specified TIM 
   *         peripheral.
@@ -2018,6 +2095,7 @@ void TIM_ICStructInit(TIM_ICInitTypeDef* TIM_ICInitStruct)
   * @brief  Configures the TIM peripheral according to the specified
   *         parameters in the TIM_ICInitStruct to measure an external PWM signal.
   * @param  TIMx: where x can be 1, 2, 3 or 15 to select the TIM peripheral.
+  * @note   TIM2 is not applicable for STM32F030 devices.  
   * @param  TIM_ICInitStruct: pointer to a TIM_ICInitTypeDef structure
   *         that contains the configuration information for the specified TIM 
   *         peripheral.
@@ -2076,6 +2154,7 @@ void TIM_PWMIConfig(TIM_TypeDef* TIMx, TIM_ICInitTypeDef* TIM_ICInitStruct)
 /**
   * @brief  Gets the TIMx Input Capture 1 value.
   * @param  TIMx: where x can be 1, 2, 3, 14, 15, 16 or 17 to select the TIM peripheral.
+  * @note   TIM2 is not applicable for STM32F030 devices.  
   * @retval Capture Compare 1 Register value.
   */
 uint32_t TIM_GetCapture1(TIM_TypeDef* TIMx)
@@ -2104,6 +2183,7 @@ uint32_t TIM_GetCapture2(TIM_TypeDef* TIMx)
 /**
   * @brief  Gets the TIMx Input Capture 3 value.
   * @param  TIMx: where x can be 1, 2 or 3 to select the TIM peripheral.
+  * @note   TIM2 is not applicable for STM32F030 devices.  
   * @retval Capture Compare 3 Register value.
   */
 uint32_t TIM_GetCapture3(TIM_TypeDef* TIMx)
@@ -2118,6 +2198,7 @@ uint32_t TIM_GetCapture3(TIM_TypeDef* TIMx)
 /**
   * @brief  Gets the TIMx Input Capture 4 value.
   * @param  TIMx: where x can be 1, 2 or 3 to select the TIM peripheral.
+  * @note   TIM2 is not applicable for STM32F030 devices.  
   * @retval Capture Compare 4 Register value.
   */
 uint32_t TIM_GetCapture4(TIM_TypeDef* TIMx)
@@ -2132,6 +2213,7 @@ uint32_t TIM_GetCapture4(TIM_TypeDef* TIMx)
 /**
   * @brief  Sets the TIMx Input Capture 1 prescaler.
   * @param  TIMx: where x can be 1, 2, 3, 14, 15, 16 or 17 to select the TIM peripheral.
+  * @note   TIM2 is not applicable for STM32F030 devices.  
   * @param  TIM_ICPSC: specifies the Input Capture1 prescaler new value.
   *          This parameter can be one of the following values:
   *            @arg TIM_ICPSC_DIV1: no prescaler
@@ -2155,6 +2237,7 @@ void TIM_SetIC1Prescaler(TIM_TypeDef* TIMx, uint16_t TIM_ICPSC)
 /**
   * @brief  Sets the TIMx Input Capture 2 prescaler.
   * @param  TIMx: where x can be 1, 2, 3 or 15 to select the TIM peripheral.
+  * @note   TIM2 is not applicable for STM32F030 devices.  
   * @param  TIM_ICPSC: specifies the Input Capture2 prescaler new value.
   *          This parameter can be one of the following values:
   *            @arg TIM_ICPSC_DIV1: no prescaler
@@ -2178,6 +2261,7 @@ void TIM_SetIC2Prescaler(TIM_TypeDef* TIMx, uint16_t TIM_ICPSC)
 /**
   * @brief  Sets the TIMx Input Capture 3 prescaler.
   * @param  TIMx: where x can be 1, 2 or 3 to select the TIM peripheral.
+  * @note   TIM2 is not applicable for STM32F030 devices.  
   * @param  TIM_ICPSC: specifies the Input Capture3 prescaler new value.
   *          This parameter can be one of the following values:
   *            @arg TIM_ICPSC_DIV1: no prescaler
@@ -2201,6 +2285,7 @@ void TIM_SetIC3Prescaler(TIM_TypeDef* TIMx, uint16_t TIM_ICPSC)
 /**
   * @brief  Sets the TIMx Input Capture 4 prescaler.
   * @param  TIMx: where x can be 1, 2 or 3 to select the TIM peripheral.
+  * @note   TIM2 is not applicable for STM32F030 devices.  
   * @param  TIM_ICPSC: specifies the Input Capture4 prescaler new value.
   *          This parameter can be one of the following values:
   *            @arg TIM_ICPSC_DIV1: no prescaler
@@ -2239,7 +2324,10 @@ void TIM_SetIC4Prescaler(TIM_TypeDef* TIMx, uint16_t TIM_ICPSC)
 
 /**
   * @brief  Enables or disables the specified TIM interrupts.
-  * @param  TIMx: where x can be 1, 2, 3, 6, 14, 15, 16 or 17 to select the TIMx peripheral.
+  * @param  TIMx: where x can be 1, 2, 3, 6, 7, 14, 15, 16 or 17 to select the TIMx peripheral.
+  * @note   TIM7 is applicable only for STM32F072 devices
+  * @note   TIM6 is not applivable for STM32F031 devices.
+  * @note   TIM2 is not applicable for STM32F030 devices.
   * @param  TIM_IT: specifies the TIM interrupts sources to be enabled or disabled.
   *          This parameter can be any combination of the following values:
   *            @arg TIM_IT_Update: TIM update Interrupt source
@@ -2251,7 +2339,7 @@ void TIM_SetIC4Prescaler(TIM_TypeDef* TIMx, uint16_t TIM_ICPSC)
   *            @arg TIM_IT_Trigger: TIM Trigger Interrupt source
   *            @arg TIM_IT_Break: TIM Break Interrupt source
   * 
-  * @note   TIM6 can only generate an update interrupt.
+  * @note   TIM6 and TIM7 can only generate an update interrupt.
   * @note   TIM15 can have only TIM_IT_Update, TIM_IT_CC1,TIM_IT_CC2 or TIM_IT_Trigger. 
   * @note   TIM14, TIM16 and TIM17 can have TIM_IT_Update or TIM_IT_CC1.   
   * @note   TIM_IT_Break is used only with TIM1 and TIM15. 
@@ -2282,8 +2370,11 @@ void TIM_ITConfig(TIM_TypeDef* TIMx, uint16_t TIM_IT, FunctionalState NewState)
 
 /**
   * @brief  Configures the TIMx event to be generate by software.
-  * @param  TIMx: where x can be 1, 2, 3, 6, 14, 15, 16 or 17 to select the 
+  * @param  TIMx: where x can be 1, 2, 3, 6, 7, 14, 15, 16 or 17 to select the 
   *         TIM peripheral.
+  * @note   TIM7 is applicable only for STM32F072 devices
+  * @note   TIM6 is not applivable for STM32F031 devices.
+  * @note   TIM2 is not applicable for STM32F030 devices.  
   * @param  TIM_EventSource: specifies the event source.
   *          This parameter can be one or more of the following values:  
   *            @arg TIM_EventSource_Update: Timer update Event source
@@ -2295,9 +2386,7 @@ void TIM_ITConfig(TIM_TypeDef* TIMx, uint16_t TIM_IT, FunctionalState NewState)
   *            @arg TIM_EventSource_Trigger: Timer Trigger Event source
   *            @arg TIM_EventSource_Break: Timer Break event source
   *
-  * @note   TIM6 can only generate an update event. 
-  * @note   TIM9 can only generate an update event, Capture Compare 1 event, 
-  *         Capture Compare 2 event and TIM_EventSource_Trigger.  
+  * @note   TIM6 and TIM7 can only generate an update event.  
   * @note   TIM_EventSource_COM and TIM_EventSource_Break are used only with TIM1.
   *             
   * @retval None
@@ -2313,7 +2402,10 @@ void TIM_GenerateEvent(TIM_TypeDef* TIMx, uint16_t TIM_EventSource)
 
 /**
   * @brief  Checks whether the specified TIM flag is set or not.
-  * @param  TIMx: where x can be 1, 2, 3, 6, 14, 15, 16 or 17 to select the TIM peripheral.
+  * @param  TIMx: where x can be 1, 2, 3, 6, 7, 14, 15, 16 or 17 to select the TIM peripheral.
+  * @note   TIM7 is applicable only for STM32F072 devices
+  * @note   TIM6 is not applivable for STM32F031 devices.
+  * @note   TIM2 is not applicable for STM32F030 devices.
   * @param  TIM_FLAG: specifies the flag to check.
   *          This parameter can be one of the following values:
   *            @arg TIM_FLAG_Update: TIM update Flag
@@ -2329,7 +2421,7 @@ void TIM_GenerateEvent(TIM_TypeDef* TIMx, uint16_t TIM_EventSource)
   *            @arg TIM_FLAG_CC3OF: TIM Capture Compare 3 overcapture Flag
   *            @arg TIM_FLAG_CC4OF: TIM Capture Compare 4 overcapture Flag
   *
-  * @note   TIM6 can have only one update flag. 
+  * @note   TIM6 and TIM7 can have only one update flag. 
   * @note   TIM15 can have only TIM_FLAG_Update, TIM_FLAG_CC1, TIM_FLAG_CC2 or TIM_FLAG_Trigger.
   * @note   TIM14, TIM16 and TIM17 can have TIM_FLAG_Update or TIM_FLAG_CC1.   
   * @note   TIM_FLAG_Break is used only with TIM1 and TIM15. 
@@ -2358,7 +2450,10 @@ FlagStatus TIM_GetFlagStatus(TIM_TypeDef* TIMx, uint16_t TIM_FLAG)
 
 /**
   * @brief  Clears the TIMx's pending flags.
-  * @param  TIMx: where x can be 1, 2, 3, 6, 14, 15, 16 or 17 to select the TIM peripheral.
+  * @param  TIMx: where x can be 1, 2, 3, 6, 7, 14, 15, 16 or 17 to select the TIM peripheral.
+  * @note   TIM7 is applicable only for STM32F072 devices
+  * @note   TIM6 is not applivable for STM32F031 devices.
+  * @note   TIM2 is not applicable for STM32F030 devices.
   * @param  TIM_FLAG: specifies the flag bit to clear.
   *          This parameter can be any combination of the following values:
   *            @arg TIM_FLAG_Update: TIM update Flag
@@ -2374,7 +2469,7 @@ FlagStatus TIM_GetFlagStatus(TIM_TypeDef* TIMx, uint16_t TIM_FLAG)
   *            @arg TIM_FLAG_CC3OF: TIM Capture Compare 3 overcapture Flag
   *            @arg TIM_FLAG_CC4OF: TIM Capture Compare 4 overcapture Flag
   *
-  * @note   TIM6 can have only one update flag. 
+  * @note   TIM6 and TIM7 can have only one update flag. 
   * @note   TIM15 can have only TIM_FLAG_Update, TIM_FLAG_CC1,TIM_FLAG_CC2 or 
   *         TIM_FLAG_Trigger. 
   * @note   TIM14, TIM16 and TIM17 can have TIM_FLAG_Update or TIM_FLAG_CC1.   
@@ -2395,7 +2490,10 @@ void TIM_ClearFlag(TIM_TypeDef* TIMx, uint16_t TIM_FLAG)
 
 /**
   * @brief  Checks whether the TIM interrupt has occurred or not.
-  * @param  TIMx: where x can be 1, 2, 3, 6, 14, 15, 16 or 17 to select the TIM peripheral.
+  * @param  TIMx: where x can be 1, 2, 3, 6, 7, 14, 15, 16 or 17 to select the TIM peripheral.
+  * @note   TIM7 is applicable only for STM32F072 devices
+  * @note   TIM6 is not applivable for STM32F031 devices.
+  * @note   TIM2 is not applicable for STM32F030 devices.
   * @param  TIM_IT: specifies the TIM interrupt source to check.
   *          This parameter can be one of the following values:
   *            @arg TIM_IT_Update: TIM update Interrupt source
@@ -2407,7 +2505,7 @@ void TIM_ClearFlag(TIM_TypeDef* TIMx, uint16_t TIM_FLAG)
   *            @arg TIM_IT_Trigger: TIM Trigger Interrupt source
   *            @arg TIM_IT_Break: TIM Break Interrupt source
   *
-  * @note   TIM6 can generate only an update interrupt.
+  * @note   TIM6 and TIM7 can generate only an update interrupt.
   * @note   TIM15 can have only TIM_IT_Update, TIM_IT_CC1, TIM_IT_CC2 or TIM_IT_Trigger. 
   * @note   TIM14, TIM16 and TIM17 can have TIM_IT_Update or TIM_IT_CC1.   
   * @note   TIM_IT_Break is used only with TIM1 and TIM15. 
@@ -2440,7 +2538,10 @@ ITStatus TIM_GetITStatus(TIM_TypeDef* TIMx, uint16_t TIM_IT)
 
 /**
   * @brief  Clears the TIMx's interrupt pending bits.
-  * @param  TIMx: where x can be 1, 2, 3, 6, 14, 15, 16 or 17 to select the TIM peripheral.
+  * @param  TIMx: where x can be 1, 2, 3, 6, 7, 14, 15, 16 or 17 to select the TIM peripheral.
+  * @note   TIM7 is applicable only for STM32F072 devices
+  * @note   TIM6 is not applivable for STM32F031 devices.
+  * @note   TIM2 is not applicable for STM32F030 devices.
   * @param  TIM_IT: specifies the pending bit to clear.
   *          This parameter can be any combination of the following values:
   *            @arg TIM_IT_Update: TIM1 update Interrupt source
@@ -2452,7 +2553,7 @@ ITStatus TIM_GetITStatus(TIM_TypeDef* TIMx, uint16_t TIM_IT)
   *            @arg TIM_IT_Trigger: TIM Trigger Interrupt source
   *            @arg TIM_IT_Break: TIM Break Interrupt source
   *
-  * @note   TIM6 can generate only an update interrupt.
+  * @note   TIM6 and TIM7 can generate only an update interrupt.
   * @note   TIM15 can have only TIM_IT_Update, TIM_IT_CC1, TIM_IT_CC2 or TIM_IT_Trigger. 
   * @note   TIM14, TIM16 and TIM17 can have TIM_IT_Update or TIM_IT_CC1.   
   * @note   TIM_IT_Break is used only with TIM1 and TIM15. 
@@ -2473,6 +2574,7 @@ void TIM_ClearITPendingBit(TIM_TypeDef* TIMx, uint16_t TIM_IT)
 /**
   * @brief  Configures the TIMx's DMA interface.
   * @param  TIMx: where x can be 1, 2, 3, 15, 16 or 17  to select the TIM peripheral.
+  * @note   TIM2 is not applicable for STM32F030 devices.
   * @param  TIM_DMABase: DMA Base address.
   *          This parameter can be one of the following values:
   *            @arg TIM_DMABase_CR1
@@ -2509,7 +2611,10 @@ void TIM_DMAConfig(TIM_TypeDef* TIMx, uint16_t TIM_DMABase, uint16_t TIM_DMABurs
 
 /**
   * @brief  Enables or disables the TIMx's DMA Requests.
-  * @param  TIMx: where x can be 1, 2, 3, 6, 15, 16 or 17 to select the TIM peripheral. 
+  * @param  TIMx: where x can be 1, 2, 3, 6, 7, 15, 16 or 17 to select the TIM peripheral. 
+  * @note   TIM7 is applicable only for STM32F072 devices
+  * @note   TIM6 is not applivable for STM32F031 devices.
+  * @note   TIM2 is not applicable for STM32F030 devices.
   * @param  TIM_DMASource: specifies the DMA Request sources.
   *          This parameter can be any combination of the following values:
   *            @arg TIM_DMA_Update: TIM update Interrupt source
@@ -2545,6 +2650,7 @@ void TIM_DMACmd(TIM_TypeDef* TIMx, uint16_t TIM_DMASource, FunctionalState NewSt
 /**
   * @brief  Selects the TIMx peripheral Capture Compare DMA source.
   * @param  TIMx: where x can be 1, 2, 3, 15, 16 or 17  to select the TIM peripheral.
+  * @note   TIM2 is not applicable for STM32F030 devices.
   * @param  NewState: new state of the Capture Compare DMA source
   *          This parameter can be: ENABLE or DISABLE.
   * @retval None
@@ -2586,6 +2692,7 @@ void TIM_SelectCCDMA(TIM_TypeDef* TIMx, FunctionalState NewState)
 /**
   * @brief  Configures the TIMx internal Clock
   * @param  TIMx: where x can be 1, 2, 3, or 15 to select the TIM peripheral.
+  * @note   TIM2 is not applicable for STM32F030 devices.  
   * @retval None
   */
 void TIM_InternalClockConfig(TIM_TypeDef* TIMx)
@@ -2599,6 +2706,7 @@ void TIM_InternalClockConfig(TIM_TypeDef* TIMx)
 /**
   * @brief  Configures the TIMx Internal Trigger as External Clock
   * @param  TIMx: where x can be 1, 2, 3, or 15 to select the TIM peripheral.
+  * @note   TIM2 is not applicable for STM32F030 devices.  
   * @param  TIM_ITRSource: Trigger source.
   *          This parameter can be one of the following values:
   *            @arg  TIM_TS_ITR0: Internal Trigger 0
@@ -2621,6 +2729,7 @@ void TIM_ITRxExternalClockConfig(TIM_TypeDef* TIMx, uint16_t TIM_InputTriggerSou
 /**
   * @brief  Configures the TIMx Trigger as External Clock
   * @param  TIMx: where x can be 1, 2, 3, or 15 to select the TIM peripheral.
+  * @note   TIM2 is not applicable for STM32F030 devices.  
   * @param  TIM_TIxExternalCLKSource: Trigger source.
   *          This parameter can be one of the following values:
   *            @arg TIM_TIxExternalCLK1Source_TI1ED: TI1 Edge Detector
@@ -2660,6 +2769,7 @@ void TIM_TIxExternalClockConfig(TIM_TypeDef* TIMx, uint16_t TIM_TIxExternalCLKSo
 /**
   * @brief  Configures the External clock Mode1
   * @param  TIMx: where x can be 1, 2 or 3 to select the TIM peripheral.
+  * @note   TIM2 is not applicable for STM32F030 devices.  
   * @param  TIM_ExtTRGPrescaler: The external Trigger Prescaler.
   *          This parameter can be one of the following values:
   *            @arg TIM_ExtTRGPSC_OFF: ETRP Prescaler OFF.
@@ -2704,6 +2814,7 @@ void TIM_ETRClockMode1Config(TIM_TypeDef* TIMx, uint16_t TIM_ExtTRGPrescaler, ui
 /**
   * @brief  Configures the External clock Mode2
   * @param  TIMx: where x can be 1, 2 or 3 to select the TIM peripheral.
+  * @note   TIM2 is not applicable for STM32F030 devices.  
   * @param  TIM_ExtTRGPrescaler: The external Trigger Prescaler.
   *          This parameter can be one of the following values:
   *            @arg TIM_ExtTRGPSC_OFF: ETRP Prescaler OFF.
@@ -2771,6 +2882,7 @@ void TIM_ETRClockMode2Config(TIM_TypeDef* TIMx, uint16_t TIM_ExtTRGPrescaler,
 /**
   * @brief  Selects the Input Trigger source
   * @param  TIMx: where x can be 1, 2, 3 or 15 to select the TIM peripheral.
+  * @note   TIM2 is not applicable for STM32F030 devices.  
   * @param  TIM_InputTriggerSource: The Input Trigger source.
   *          This parameter can be one of the following values:
   *            @arg TIM_TS_ITR0: Internal Trigger 0
@@ -2803,7 +2915,10 @@ void TIM_SelectInputTrigger(TIM_TypeDef* TIMx, uint16_t TIM_InputTriggerSource)
 
 /**
   * @brief  Selects the TIMx Trigger Output Mode.
-  * @param  TIMx: where x can be 1, 2, 3, 6, or 15 to select the TIM peripheral.
+  * @param  TIMx: where x can be 1, 2, 3, 6, 7, or 15 to select the TIM peripheral.
+  * @note   TIM7 is applicable only for STM32F072 devices
+  * @note   TIM6 is not applivable for STM32F031 devices.
+  * @note   TIM2 is not applicable for STM32F030 devices.  
   * @param  TIM_TRGOSource: specifies the Trigger Output source.
   *          This parameter can be one of the following values:
   *
@@ -2812,7 +2927,7 @@ void TIM_SelectInputTrigger(TIM_TypeDef* TIMx, uint16_t TIM_InputTriggerSource)
   *            @arg TIM_TRGOSource_Enable: The Counter Enable CEN is used as the trigger output (TRGO).
   *            @arg TIM_TRGOSource_Update: The update event is selected as the trigger output (TRGO).
   *
-  *   - For all TIMx except TIM6 
+  *   - For all TIMx except TIM6 and TIM7
   *            @arg TIM_TRGOSource_OC1: The trigger output sends a positive pulse when the CC1IF flag
   *                                     is to be set, as soon as a capture or compare match occurs (TRGO).
   *            @arg TIM_TRGOSource_OC1Ref: OC1REF signal is used as the trigger output (TRGO).
@@ -2837,6 +2952,7 @@ void TIM_SelectOutputTrigger(TIM_TypeDef* TIMx, uint16_t TIM_TRGOSource)
 /**
   * @brief  Selects the TIMx Slave Mode.
   * @param  TIMx: where x can be 1, 2, 3 or 15 to select the TIM peripheral.
+  * @note   TIM2 is not applicable for STM32F030 devices.  
   * @param  TIM_SlaveMode: specifies the Timer Slave Mode.
   *          This parameter can be one of the following values:
   *            @arg TIM_SlaveMode_Reset: Rising edge of the selected trigger signal (TRGI) re-initializes
@@ -2861,6 +2977,7 @@ void TIM_SelectSlaveMode(TIM_TypeDef* TIMx, uint16_t TIM_SlaveMode)
 /**
   * @brief  Sets or Resets the TIMx Master/Slave Mode.
   * @param  TIMx: where x can be 1, 2, 3, or 15 to select the TIM peripheral.
+  * @note   TIM2 is not applicable for STM32F030 devices.  
   * @param  TIM_MasterSlaveMode: specifies the Timer Master Slave Mode.
   *          This parameter can be one of the following values:
   *            @arg TIM_MasterSlaveMode_Enable: synchronization between the current timer
@@ -2884,6 +3001,7 @@ void TIM_SelectMasterSlaveMode(TIM_TypeDef* TIMx, uint16_t TIM_MasterSlaveMode)
 /**
   * @brief  Configures the TIMx External Trigger (ETR).
   * @param  TIMx: where x can be 1, 2 or 3 to select the TIM peripheral.
+  * @note   TIM2 is not applicable for STM32F030 devices.   
   * @param  TIM_ExtTRGPrescaler: The external Trigger Prescaler.
   *          This parameter can be one of the following values:
   *            @arg TIM_ExtTRGPSC_OFF: ETRP Prescaler OFF.
@@ -2937,6 +3055,7 @@ void TIM_ETRConfig(TIM_TypeDef* TIMx, uint16_t TIM_ExtTRGPrescaler, uint16_t TIM
 /**
   * @brief  Configures the TIMx Encoder Interface.
   * @param  TIMx: where x can be  1, 2 or 3 to select the TIM peripheral.
+  * @note   TIM2 is not applicable for STM32F030 devices.   
   * @param  TIM_EncoderMode: specifies the TIMx Encoder Mode.
   *          This parameter can be one of the following values:
   *            @arg TIM_EncoderMode_TI1: Counter counts on TI1FP1 edge depending on TI2FP2 level.
@@ -2992,6 +3111,7 @@ void TIM_EncoderInterfaceConfig(TIM_TypeDef* TIMx, uint16_t TIM_EncoderMode,
 /**
   * @brief  Enables or disables the TIMx's Hall sensor interface.
   * @param  TIMx: where x can be 1, 2 or 3 to select the TIM peripheral.
+  * @note   TIM2 is not applicable for STM32F030 devices.   
   * @param  NewState: new state of the TIMx Hall sensor interface.
   *          This parameter can be: ENABLE or DISABLE.
   * @retval None
@@ -3059,6 +3179,7 @@ void TIM_RemapConfig(TIM_TypeDef* TIMx, uint16_t TIM_Remap)
 /**
   * @brief  Configure the TI1 as Input.
   * @param  TIMx: where x can be 1, 2, 3, 14, 15, 16 or 17 to select the TIM peripheral.
+  * @note   TIM2 is not applicable for STM32F030 devices.   
   * @param  TIM_ICPolarity: The Input Polarity.
   *          This parameter can be one of the following values:
   *            @arg TIM_ICPolarity_Rising
@@ -3095,6 +3216,7 @@ static void TI1_Config(TIM_TypeDef* TIMx, uint16_t TIM_ICPolarity, uint16_t TIM_
 /**
   * @brief  Configure the TI2 as Input.
   * @param  TIMx: where x can be 1, 2, 3, or 15 to select the TIM peripheral.
+  * @note   TIM2 is not applicable for STM32F030 devices.  
   * @param  TIM_ICPolarity: The Input Polarity.
   *          This parameter can be one of the following values:
   *            @arg TIM_ICPolarity_Rising
@@ -3132,6 +3254,7 @@ static void TI2_Config(TIM_TypeDef* TIMx, uint16_t TIM_ICPolarity, uint16_t TIM_
 /**
   * @brief  Configure the TI3 as Input.
   * @param  TIMx: where x can be 1, 2 or 3 to select the TIM peripheral.
+  * @note   TIM2 is not applicable for STM32F030 devices.   
   * @param  TIM_ICPolarity: The Input Polarity.
   *          This parameter can be one of the following values:
   *            @arg TIM_ICPolarity_Rising
@@ -3168,6 +3291,7 @@ static void TI3_Config(TIM_TypeDef* TIMx, uint16_t TIM_ICPolarity, uint16_t TIM_
 /**
   * @brief  Configure the TI4 as Input.
   * @param  TIMx: where x can be 1, 2 or 3 to select the TIM peripheral.
+  * @note   TIM2 is not applicable for STM32F030 devices.  
   * @param  TIM_ICPolarity: The Input Polarity.
   *          This parameter can be one of the following values:
   *            @arg TIM_ICPolarity_Rising
@@ -3215,4 +3339,3 @@ static void TI4_Config(TIM_TypeDef* TIMx, uint16_t TIM_ICPolarity, uint16_t TIM_
   * @}
   */
 
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

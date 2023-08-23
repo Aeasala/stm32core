@@ -9,7 +9,7 @@ You can use, modify and distribute this file freely, but without any warranty.
 
 /* Sections Definitions */
 
-#ifdef STM32F051R8
+#ifdef STM32F051
 ENTRY(Reset_Handler)
 
 MEMORY

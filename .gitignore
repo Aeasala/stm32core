@@ -5,3 +5,9 @@
 /bin/*.elf
 /bin/*.hex
 /bin/*.lst
+*.css
+/src/bsp/CMSIS/SVD/*.exe
+/src/bsp/CMSIS/Documentation/Core/html/*.html
+*.html
+*.js
+*.png

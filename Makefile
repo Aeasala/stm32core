@@ -29,10 +29,6 @@ OBJCOPY=arm-none-eabi-objcopy
 OBJDUMP=arm-none-eabi-objdump
 SIZE=arm-none-eabi-size
 
-
-# get target-specific flags
--include targets.mk
-
 # C flags. CFLAGS_TARG is chip-specific to the STM32.
 CFLAGS  = -Wall -g -std=c99 -Os  
 CFLAGS += $(CFLAGS_TARG)
@@ -48,10 +44,11 @@ vpath %.a $(STD_PERIPH_LIB)
 
 ROOT=$(shell pwd)
 
+
 # keep these as is.
-CFLAGS += -I inc -I$(STD_PERIPH_LIB) -I $(STD_PERIPH_LIB)/CMSIS/Device/ST/STM32F0xx/Include
-CFLAGS += -I $(STD_PERIPH_LIB)/CMSIS/Include -I $(STD_PERIPH_LIB)/STM32F0xx_StdPeriph_Driver/inc
-FLAGS += -include $(SRC)/stm32f0xx_conf.h
+INCLUDES = -I$(STD_PERIPH_LIB) -I $(STD_PERIPH_LIB)/CMSIS/Device/ST/STM32F0xx/Include
+INCLUDES += -I $(STD_PERIPH_LIB)/CMSIS/Include -I $(STD_PERIPH_LIB)/STM32F0xx_StdPeriph_Driver/inc
+INCLUDES += -include $(SRC)/Application.h -include $(SRC)/stm32f0xx_conf.h
 
 ####################################################################################
 ####################################################################################
@@ -96,10 +93,6 @@ endif
 #additional linker flags
 LDFLAGS += 
 
-# library flags, pulled from the concat within libs.mk
--include libs.mk
-LDLIBS = $(LIBADD)
-
 ####################################################################################
 ####################################################################################
 	
@@ -111,9 +104,9 @@ LDLIBS = $(LIBADD)
 DEPFLAGS = -MM -MG -MT
 #  | sed "s,\(\)\.o[ :]*,\1.o $@ $(@:.d=.pp) $(@:.d=.su) : ,g"
 DEPENDS := $(OBJECTS:.o=.d)
-DEPEND.c = $(CC) $(CFLAGS) $(DEPFLAGS) $(@:.d=.o) $(@:.d=.c) 
-DEPEND.s = $(CC) $(CFLAGS) $(DEPFLAGS) $(@:.d=.o) $(@:.d=.s) 
-DEPEND.cxx = $(CXX) $(CFLAGS) $(DEPFLAGS) $(@:.d=.o) $(@:.d=.cpp) 
+DEPEND.c = $(CC) $(INCLUDES) $(CFLAGS) $(DEPFLAGS) $(@:.d=.o) $(@:.d=.c) 
+DEPEND.s = $(CC) $(INCLUDES) $(CFLAGS) $(DEPFLAGS) $(@:.d=.o) $(@:.d=.s) 
+DEPEND.cxx = $(CXX) $(INCLUDES) $(CFLAGS) $(DEPFLAGS) $(@:.d=.o) $(@:.d=.cpp) 
 
 # dependencies want to get rebuilt on clean for some reason, bluntly ignore it
 ifneq ($(MAKECMDGOALS),clean)
@@ -125,11 +118,11 @@ endif
 endif
 
 # compile C source
-COMPILE.c = $(CC) $(FLAGS) $(CFLAGS) -c -o $@ -L$(STD_PERIPH_LIB) -lstm32f0 -L$(BIN)
+COMPILE.c = $(CC) $(INCLUDES) $(FLAGS) $(CFLAGS) -c -o $@ -L$(STD_PERIPH_LIB) -lstm32f0 -L$(BIN)
 # compile C++ source
-COMPILE.cxx = $(CXX) $(FLAGS) $(CXXFLAGS) $(CPPFLAGS) -c -o $@ -L$(STD_PERIPH_LIB) -lstm32f0 -L$(BIN) -T$(EXE).ld
+COMPILE.cxx = $(CXX) $(INCLUDES) $(FLAGS) $(CXXFLAGS) $(CPPFLAGS) -c -o $@ -L$(STD_PERIPH_LIB) -lstm32f0 -L$(BIN) -T$(EXE).ld
 # link objects
-LINK.o = $(LD) $(FLAGS) $(CFLAGS) $(LDFLAGS) -o $@ -L$(STD_PERIPH_LIB) -lstm32f0 -L$(BIN) -T$(EXE).ld $(LDLIBS)
+LINK.o = $(LD) $(INCLUDES) $(FLAGS) $(CFLAGS) $(LDFLAGS) -o $@ -L$(STD_PERIPH_LIB) -lstm32f0 -L$(BIN) -T$(EXE).ld
 
 ####################################################################################
 ####################################################################################
@@ -160,6 +153,7 @@ $(BIN)/$(EXE).elf: $(BIN)/$(EXE).ld $(OBJECTS) $(SRC)/bsp/libstm32f0.a
 	$(SIZE) $(BIN)/$(EXE).elf
 	
 $(BIN)/$(EXE).ld: $(SRC)/Application.h $(LDSCRIPT_INC)/core.ld $(OBJECTS)
+	$(info tryna)
 	@$(CC) -I$(SRC) -P -E -x c $(LDSCRIPT_INC)/core.ld -o $(BIN)/$(EXE).ld
 	
 $(SRC):
@@ -200,7 +194,7 @@ $(BIN):
 %.o: %.c
 	$(info Compiling source file)
 	$(info ..... ./$(@:.o=.c) ==> ./$(@))
-	@$(COMPILE.c) $< 
+	$(COMPILE.c) $< 
 
 %.o: %.cc
 	$(info Compiling source file)
@@ -235,11 +229,6 @@ $(BIN):
 # force rebuild
 .PHONY: remake
 remake:	clean $(BIN)/$(EXE).elf
-
-# execute the program
-.PHONY: run
-run: $(BIN)/$(EXE).elf
-	@./$(BIN)/$(EXE).elf
 
 # remove previous build and objects
 .PHONY: clean

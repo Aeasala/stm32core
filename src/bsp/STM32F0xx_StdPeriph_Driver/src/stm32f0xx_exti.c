@@ -2,8 +2,8 @@
   ******************************************************************************
   * @file    stm32f0xx_exti.c
   * @author  MCD Application Team
-  * @version V1.0.1
-  * @date    20-April-2012
+  * @version V1.5.1
+  * @date    13-October-2021
   * @brief   This file provides firmware functions to manage the following 
   *          functionalities of the EXTI peripheral:
   *           + Initialization and Configuration
@@ -16,14 +16,18 @@
     [..] External interrupt/event lines are mapped as following:
          (#) All available GPIO pins are connected to the 16 external 
              interrupt/event lines from EXTI0 to EXTI15.
-         (#) EXTI line 16 is connected to the PVD output.
+         (#) EXTI line 16 is connected to the PVD output, not applicable for STM32F030 devices.
          (#) EXTI line 17 is connected to the RTC Alarm event.
-         (#) EXTI line 19 is connected to the RTC Tamper and TimeStamp events
-         (#) EXTI line 21 is connected to the Comparator 1 wakeup event 
-         (#) EXTI line 22 is connected to the Comparator 2 wakeup event
-         (#) EXTI line 23 is connected to the I2C1 wakeup event
-         (#) EXTI line 25 is connected to the USART1 wakeup event
-         (#) EXTI line 27 is connected to the CEC wakeup event
+         (#) EXTI line 18 is connected to the RTC Alarm event, applicable only for STM32F072 devices.
+         (#) EXTI line 19 is connected to the RTC Tamper and TimeStamp events.
+         (#) EXTI line 20 is connected to the RTC wakeup event, applicable only for STM32F072 devices.
+         (#) EXTI line 21 is connected to the Comparator 1 wakeup event, applicable only for STM32F051 and STM32F072 devices. 
+         (#) EXTI line 22 is connected to the Comparator 2 wakeup event, applicable only for STM32F051 and STM32F072 devices.
+         (#) EXTI line 23 is connected to the I2C1 wakeup event, not applicable for STM32F030 devices.
+         (#) EXTI line 25 is connected to the USART1 wakeup event, not applicable for STM32F030 devices.
+         (#) EXTI line 26 is connected to the USART2 wakeup event, applicable only for STM32F072 devices.
+         (#) EXTI line 27 is connected to the CEC wakeup event, applicable only for STM32F051 and STM32F072 devices.
+         (#) EXTI line 31 is connected to the VDD USB monitor event, applicable only for STM32F072 devices.
 
                        ##### How to use this driver ##### 
   ==============================================================================
@@ -45,19 +49,12 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; COPYRIGHT 2012 STMicroelectronics</center></h2>
+  * Copyright (c) 2014 STMicroelectronics.
+  * All rights reserved.
   *
-  * Licensed under MCD-ST Liberty SW License Agreement V2, (the "License");
-  * You may not use this file except in compliance with the License.
-  * You may obtain a copy of the License at:
-  *
-  *        http://www.st.com/software_license_agreement_liberty_v2
-  *
-  * Unless required by applicable law or agreed to in writing, software 
-  * distributed under the License is distributed on an "AS IS" BASIS, 
-  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  * See the License for the specific language governing permissions and
-  * limitations under the License.
+  * This software is licensed under terms that can be found in the LICENSE file
+  * in the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
   *
   ******************************************************************************
   */
@@ -262,12 +259,11 @@ void EXTI_ClearFlag(uint32_t EXTI_Line)
 ITStatus EXTI_GetITStatus(uint32_t EXTI_Line)
 {
   ITStatus bitstatus = RESET;
-  uint32_t enablestatus = 0;
+
   /* Check the parameters */
   assert_param(IS_GET_EXTI_LINE(EXTI_Line));
 
-  enablestatus =  EXTI->IMR & EXTI_Line;
-  if (((EXTI->PR & EXTI_Line) != (uint32_t)RESET) && (enablestatus != (uint32_t)RESET))
+  if ((EXTI->PR & EXTI_Line) != (uint32_t)RESET)
   {
     bitstatus = SET;
   }
@@ -276,7 +272,6 @@ ITStatus EXTI_GetITStatus(uint32_t EXTI_Line)
     bitstatus = RESET;
   }
   return bitstatus;
-  
 }
 
 /**
@@ -309,4 +304,3 @@ void EXTI_ClearITPendingBit(uint32_t EXTI_Line)
   * @}
   */
 
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
