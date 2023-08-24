@@ -1,7 +1,5 @@
-# Initial template: Credits to Tom Daley
-#     https://gist.github.com/tomdaley92/190c68e8a84038cc91a5459409e007df
-
-# A generic build template for C programs in STM32
+# By: Evan MacDonald
+# STM32 Core Template.
 
 ####################################################################################
 ####################################################################################
@@ -18,6 +16,7 @@ BSP = $(SRC)/bsp
 LDSCRIPT_INC=$(SRC)/dev
 
 ####################################################################################
+# Toolchain Aliases ################################################################
 ####################################################################################
 
 # C compiler
@@ -29,59 +28,60 @@ OBJCOPY=arm-none-eabi-objcopy
 OBJDUMP=arm-none-eabi-objdump
 SIZE=arm-none-eabi-size
 
+####################################################################################
+# Compiler and Linker flags ########################################################
+####################################################################################
+
+# Common to all.
+FLAGS =
+
 # C flags. CFLAGS_TARG is chip-specific to the STM32.
-CFLAGS  = -Wall -g -std=c99 -Os  
+CFLAGS = $(FLAGS)
+CFLAGS += -Wall -g -std=c99 -Os  
 CFLAGS += $(CFLAGS_TARG)
 CFLAGS += -ffunction-sections -fdata-sections
 CFLAGS += -Wl,--gc-sections
 
+# Linker flags.  CFLAGS are tied-in.
+# Creates a .map of the program, unless the target specifies.
+LDFLAGS = $(FLAGS)
+LDFLAGS += $(CFLAGS)
+ifneq ($(MAKECMDGOALS),nomap)
+LDFLAGS += -Wl,-Map=$(BIN)/$(EXE).map -lm -Wl,--cref
+endif
+
 ####################################################################################
+# Path and File includes ###########################################################
 ####################################################################################
 
-# dependencies and includes.  may remove
-
-# stm32f0xx_conf.h's relations are dependent on preprocessor definitions within Application.h, hence the ordering.
-INCLUDES = -I$(BSP) -I $(BSP)/CMSIS/Device/ST/STM32F0xx/Include
+# The CMSIS and StdPeriph libraries are required.
+# Application.h contains preprocessor directives that are required.
+INCLUDES = -I $(BSP)/CMSIS/Device/ST/STM32F0xx/Include
 INCLUDES += -I $(BSP)/CMSIS/Include -I $(BSP)/STM32F0xx_StdPeriph_Driver/inc
-INCLUDES += -include $(SRC)/Application.h -include $(SRC)/stm32f0xx_conf.h
+INCLUDES += -include $(SRC)/Application.h
 
 ####################################################################################
+# Target Gathering #################################################################
 ####################################################################################
 
-# build directories and eventual item goals
-
+# All files at the top level, i.e. ./src/*, will be compiled and linked.
 SOURCES := $(wildcard $(SRC)/dev/*.s $(SRC)/*.c)
 OBJECTS := \
 	$(patsubst $(SRC)/dev/%.s,$(SRC)/dev/%.o,$(wildcard $(SRC)/dev/*.s)) \
 	$(patsubst $(SRC)/%.c,$(SRC)/%.o,$(wildcard $(SRC)/*.c))
 
-#for subdirectory inclusion, if specified.
+# Any additional folders to be compiled should be defined in "./src/subdir.mk".
 -include $(SRC)/subdir.mk
 
 ####################################################################################
+# Dependencies of Gathered Targets #################################################
 ####################################################################################
 
-#make a .map file of our linked program.
-ifneq ($(MAKECMDGOALS),nomap)
-LDFLAGS += -Wl,-Map=$(BIN)/$(EXE).map -lm -Wl,--cref
-endif
-
-#additional linker flags
-LDFLAGS += 
-
-####################################################################################
-####################################################################################
-	
-# TODO
-#-include $(SRC)/subdir.mk
-	
-# include compiler-generated dependency rules
-# dependency-generation flags
+# Flags to create dependencies from a provided source file list.
 DEPFLAGS = -MM -MG -MT
-#  | sed "s,\(\)\.o[ :]*,\1.o $@ $(@:.d=.pp) $(@:.d=.su) : ,g"
+
+# Dependencies shall be named after their origin, placed in the same folder.
 DEPENDS := $(OBJECTS:.o=.d)
-DEPEND.c = $(CC) $(INCLUDES) $(CFLAGS) $(DEPFLAGS) $(@:.d=.o) $(@:.d=.c) 
-DEPEND.s = $(CC) $(INCLUDES) $(CFLAGS) $(DEPFLAGS) $(@:.d=.o) $(@:.d=.s) 
 
 # dependencies want to get rebuilt on clean for some reason, bluntly ignore it
 ifneq ($(MAKECMDGOALS),clean)
@@ -94,16 +94,22 @@ endif
 endif
 endif
 
-# compile C source
-COMPILE.c = $(CC) $(INCLUDES) $(FLAGS) $(CFLAGS) -c -o $@ -L$(BSP) -lstm32f0 -L$(BIN)
+####################################################################################
+# Methods to reach target goals ####################################################
+####################################################################################
+
+# create dependencies of C or asm file.  asm is non-functional, but here.
+DEPEND.s = $(CC) $(INCLUDES) $(FLAGS) $(CFLAGS) $(DEPFLAGS) $(@:.d=.o) $(@:.d=.s) 
+DEPEND.c = $(CC) $(INCLUDES) $(FLAGS) $(CFLAGS) $(DEPFLAGS) $(@:.d=.o) $(@:.d=.c) 
+
+# compile C (or asm) source. -c is compile without linking
+COMPILE.c = $(CC) $(INCLUDES) $(FLAGS) $(CFLAGS) -c -o $@
 # link objects
-LINK.o = $(LD) $(INCLUDES) $(FLAGS) $(CFLAGS) $(LDFLAGS) -o $@ -L$(BSP) -lstm32f0 -L$(BIN) -T$(EXE).ld
+LINK.o = $(LD) $(INCLUDES) $(FLAGS) $(LDFLAGS) -o $@ -L$(BSP) -lstm32f0 -L$(BIN) -T$(EXE).ld
 
 ####################################################################################
+# Goals and routines ###############################################################
 ####################################################################################
-
-#Targets 
-
 .DEFAULT_GOAL = all
 
 .PHONY: all nomap
@@ -117,12 +123,11 @@ $(BSP)/libstm32f0.a:
 	@$(MAKE) --no-print-directory -C $(BSP)
 	@$(MAKE) --no-print-directory -C $(BSP) clean
 
-# Objects/depends *must* await the library to be built.
+# Conditions/requires to prevent out-of-order assembling.
 $(DEPENDS): $(BSP)/libstm32f0.a
 $(OBJECTS): $(BSP)/libstm32f0.a
 
-#.elf requires the lib file (made in bsp folder)
-#Linking
+# Final goal: elf file.  Follows tree of needing .ld, library, and compiled objects.
 $(BIN)/$(EXE).elf: $(BIN)/$(EXE).ld $(BSP)/libstm32f0.a $(OBJECTS)
 	$(info Linking target "$@" using "$<"...)
 	@$(LINK.o) $(OBJECTS)
@@ -135,20 +140,15 @@ $(BIN)/$(EXE).elf: $(BIN)/$(EXE).ld $(BSP)/libstm32f0.a $(OBJECTS)
 	$(info ---------------------------------------)
 	$(info Done.  Executable size/composition:)
 	@$(SIZE) $(BIN)/$(EXE).elf
-	
+
+#application-specific .ld generation.  based on preproc defs in Application.h, such as the chip #define
 $(BIN)/$(EXE).ld: $(SRC)/Application.h $(LDSCRIPT_INC)/core.ld $(BSP)/libstm32f0.a $(OBJECTS)
 	$(info Generating linker-directive file "$@" from preprocessor definitions...)
 	@$(CC) -I$(SRC) -P -E -x c $(LDSCRIPT_INC)/core.ld -o $(BIN)/$(EXE).ld
-	
-$(SRC):
-	$(info ./$(SRC) directory not found, creating ./$(SRC))
-	@mkdir -p $(SRC)
 
-$(BIN):
-	$(info ./$(BIN) directory not found, creating ./$(BIN))
-	@mkdir -p $(BIN)
-
-#Dependency building.
+###############################
+# Dependency Generation #######
+###############################
 %.d: %.s
 	$(info Rebuilding dependencies for $(@:.d=.s))
 	@$(DEPEND.s) $< > $@
@@ -157,7 +157,9 @@ $(BIN):
 	$(info Rebuilding dependencies for $(@:.d=.c))
 	@$(DEPEND.c) $< > $@
 
-#Compiling
+###############################
+# Compiling ###################
+###############################
 %.o: %.s
 	$(info Compiling assembly file)
 	$(info ..... ./$(@:.o=.s) ==> ./$(@))
@@ -170,6 +172,9 @@ $(BIN):
 	@$(COMPILE.c) $< 
 	$(info )
 
+###############################
+# Disassembly #################
+###############################
 %.dasm: %.elf
 	$(info Disassembling elf)
 	$(info ..... ./$(@:.elf=.dasm) ==> ./$(@))
@@ -188,6 +193,9 @@ $(BIN):
 	@$(OBJDUMP) -d $(@:.dasm=.a) > $@
 	$(info )
 
+###############################
+# Other goals #################
+###############################
 # force rebuild
 .PHONY: remake
 remake: clean
@@ -216,7 +224,8 @@ clean:
 .PHONY: cleanall
 cleanall: clean
 	@$(MAKE) --no-print-directory -C $(BSP) cleanTrue
-	
+
+#disassemble the elf, or everything
 .PHONY: dasm
 dasm: $(BIN)/$(EXE).dasm
 	$(info Disassembling "$(BIN)/$(EXE).elf" to "$(BIN)/$(EXE).dasm")
@@ -225,13 +234,10 @@ dasm: $(BIN)/$(EXE).dasm
 .PHONY: dasmall
 dasmall: $(BIN)/$(EXE).dasm $(OBJECTS:.o=.dasm) $(BSP)/libstm32f0.dasm
 	
-# remove everything except source
-.PHONY: reset
-reset:
-	$(RM) -r $(BIN)
-
+#what's on the menu?
 .PHONY: help
 help:
+	@echo > /dev/null
 	$(info clean: removes all objects, dependencies, and executables)
 	$(info cleanall: removes everything from clean as well as the generated library file)
 	$(info remake: cleans and rebuilds the program)
@@ -239,6 +245,3 @@ help:
 	$(info lib: just generate the library)
 	$(info dasmall: disassemble everything)
 	$(info dasm: disassemble the elf)
-	
-	
-	
