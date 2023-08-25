@@ -1,3 +1,4 @@
+#include "Application.h"
 #include "stm32f0xx_conf.h"
 #include "system_stm32f0xx.h"
 
@@ -5,7 +6,7 @@ void SysTick_Handler(void) {
   static uint16_t tick = 0;
 
   switch (tick++) {
-  	case 100:
+  	case 10:
   		tick = 0;
   		GPIOC->ODR ^= (1 << 8);
   		break;
