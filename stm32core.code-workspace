@@ -8,7 +8,15 @@
 		"files.associations": {
 			"stm32f0xx_conf.h": "c",
 			"stm32f0xx.h": "c",
-			"system_stm32f0xx.h": "c"
-		}
+			"system_stm32f0xx.h": "c",
+			"application.h": "c"
+		},
+		"makefile.launchConfigurations": [
+			{
+				"cwd": "c:\\Users\\evan6\\Documents\\Projects\\VSCode\\stm32core\\bin",
+				"binaryPath": "c:\\Users\\evan6\\Documents\\Projects\\VSCode\\stm32core\\bin\\stm32core.elf",
+				"binaryArgs": []
+			}
+		]
 	}
 }
