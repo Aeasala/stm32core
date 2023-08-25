@@ -32,6 +32,8 @@ SIZE=arm-none-eabi-size
 # Compiler and Linker flags ########################################################
 ####################################################################################
 
+include $(SRC)/target.mk
+
 # Common to all.
 FLAGS =
 
