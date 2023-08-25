@@ -3,10 +3,12 @@ AR=arm-none-eabi-ar
 
 ###########################################
 
+include ../target.mk
+
 #vpath %.c STM32F0xx_StdPeriph_Driver/src
 
 CFLAGS  = -g -O2 -Wall
-CFLAGS += -mlittle-endian -mthumb -mcpu=cortex-m0 -march=armv6s-m
+CFLAGS += $(CFLAGS_TARG)
 CFLAGS += -ffreestanding -nostdlib
 CFLAGS += -ICMSIS/Include -ICMSIS/Device/ST/STM32F0xx/Include -ISTM32F0xx_StdPeriph_Driver/inc -I../ -includeApplication.h -includestm32f0xx_conf.h 
 
