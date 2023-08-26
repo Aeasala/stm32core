@@ -17,7 +17,8 @@ environment/project/com.st.stm32cube.ide.mcu.gnu.managedbuild.toolchain.base.203
 environment/project/com.st.stm32cube.ide.mcu.gnu.managedbuild.toolchain.base.2039799748/CWD/delimiter=;
 environment/project/com.st.stm32cube.ide.mcu.gnu.managedbuild.toolchain.base.2039799748/CWD/operation=remove
 environment/project/com.st.stm32cube.ide.mcu.gnu.managedbuild.toolchain.base.2039799748/PATH/delimiter=;
-environment/project/com.st.stm32cube.ide.mcu.gnu.managedbuild.toolchain.base.2039799748/PATH/operation=remove
+environment/project/com.st.stm32cube.ide.mcu.gnu.managedbuild.toolchain.base.2039799748/PATH/operation=replace
+environment/project/com.st.stm32cube.ide.mcu.gnu.managedbuild.toolchain.base.2039799748/PATH/value=${PATH}
 environment/project/com.st.stm32cube.ide.mcu.gnu.managedbuild.toolchain.base.2039799748/PWD/delimiter=;
 environment/project/com.st.stm32cube.ide.mcu.gnu.managedbuild.toolchain.base.2039799748/PWD/operation=remove
 environment/project/com.st.stm32cube.ide.mcu.gnu.managedbuild.toolchain.base.2039799748/append=true
