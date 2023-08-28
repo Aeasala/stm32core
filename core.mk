@@ -16,10 +16,8 @@ APPBIN = bin
 
 # Stuff within this folder.
 BIN = $(CORE)/bin
-OBJ = $(CORE)/obj
-SRC = $(CORE)/src
-BSP = $(SRC)/bsp
-LDSCRIPT_INC=$(SRC)/dev
+BSP = $(CORE)/bsp
+LDSCRIPT_INC=$(CORE)/dev
 
 ####################################################################################
 # Toolchain Aliases ################################################################
@@ -38,7 +36,7 @@ SIZE=arm-none-eabi-size
 # Compiler and Linker flags ########################################################
 ####################################################################################
 
-include $(SRC)/target.mk
+include $(CORE)/target.mk
 
 # Common to all.
 FLAGS =
@@ -72,16 +70,18 @@ INCLUDES += -I. -include Application.h
 # Target Gathering #################################################################
 ####################################################################################
 
-# All files at the top level, i.e. ./src/*, will be compiled and linked.
-CORESOURCES := $(wildcard $(SRC)/dev/*.s $(SRC)/*.c)
+# All files at the top level, i.e. ./CORE/*, will be compiled and linked.
+CORESOURCES := $(wildcard $(CORE)/dev/*.s $(CORE)/*.c)
 COREOBJECTS := \
-	$(patsubst $(SRC)/dev/%.s,$(SRC)/dev/%.o,$(wildcard $(SRC)/dev/*.s)) \
-	$(patsubst $(SRC)/%.c,$(SRC)/%.o,$(wildcard $(SRC)/*.c))
+	$(patsubst $(CORE)/dev/%.s,$(CORE)/dev/%.o,$(wildcard $(CORE)/dev/*.s)) \
+	$(patsubst $(CORE)/%.c,$(CORE)/%.o,$(wildcard $(CORE)/*.c))
 
 ALLSOURCES := $(CORESOURCES) $(SOURCES)
 ALLOBJECTS := $(COREOBJECTS) $(OBJECTS)
-# Any additional folders to be compiled should be defined in "./src/subdir.mk".
--include $(SRC)/subdir.mk
+
+# Any additional folders to be compiled should be defined in "coremodules.mk".
+-include coremodules.mk
+include $(patsubst %,%/subdir.mk,$(COREMODULES))
 
 ####################################################################################
 # Dependencies of Gathered Targets #################################################
