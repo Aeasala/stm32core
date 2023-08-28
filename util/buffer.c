@@ -1,6 +1,6 @@
 //////////////
 /* Includes */
-
+#include "stm32core/util/buffer.h"
 ////////////////////
 /* Private Macros */
 

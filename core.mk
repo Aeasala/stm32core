@@ -76,12 +76,13 @@ COREOBJECTS := \
 	$(patsubst $(CORE)/dev/%.s,$(CORE)/dev/%.o,$(wildcard $(CORE)/dev/*.s)) \
 	$(patsubst $(CORE)/%.c,$(CORE)/%.o,$(wildcard $(CORE)/*.c))
 
+# Any additional folders to be compiled should be defined in "coremodules.mk".
+# This include call will append onto CORESOURCES, COREOBJECTS
+-include $(CORE)/coremodules.mk
+include $(patsubst %,$(CORE)/%/subdir.mk,$(COREMODULES))
+
 ALLSOURCES := $(CORESOURCES) $(SOURCES)
 ALLOBJECTS := $(COREOBJECTS) $(OBJECTS)
-
-# Any additional folders to be compiled should be defined in "coremodules.mk".
--include coremodules.mk
-include $(patsubst %,%/subdir.mk,$(COREMODULES))
 
 ####################################################################################
 # Dependencies of Gathered Targets #################################################
