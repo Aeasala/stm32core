@@ -1,5 +1,5 @@
-#ifndef __dir_xyz_h_
-#define __dir_xyz_h_
+#ifndef __util_buffer_h_
+#define __util_buffer_h_
 
 //////////////
 /* Includes */
@@ -16,4 +16,4 @@
 ////////////////////////////////
 /* Public Function Prototypes */
 
-#endif /* __dir_xyz_h_ */
+#endif /* __util_buffer_h_ */
