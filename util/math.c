@@ -1,6 +1,6 @@
 //////////////
 /* Includes */
-
+#include "stm32core/util/math.h"
 ////////////////////
 /* Private Macros */
 

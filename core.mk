@@ -39,7 +39,7 @@ SIZE=arm-none-eabi-size
 include $(CORE)/coretarget.mk
 
 # Common to all.
-FLAGS =
+FLAGS :=
 
 # C flags. CFLAGS_TARG is chip-specific to the STM32.
 CFLAGS = $(FLAGS)
