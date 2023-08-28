@@ -59,7 +59,7 @@ endif
 
 # The CMSIS and StdPeriph libraries are required.
 # Application.h contains preprocessor directives that are required.
-INCLUDES = -I $(BSP)/CMSIS/Device/ST/STM32F0xx/Include
+INCLUDES := -I $(BSP)/CMSIS/Device/ST/STM32F0xx/Include
 INCLUDES += -I $(BSP)/CMSIS/Include -I $(BSP)/STM32F0xx_StdPeriph_Driver/inc
 INCLUDES += -include $(SRC)/Application.h
 
