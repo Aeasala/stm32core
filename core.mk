@@ -66,7 +66,7 @@ endif
 # Application.h contains preprocessor directives that are required.
 INCLUDES = -I $(BSP)/CMSIS/Device/ST/STM32F0xx/Include
 INCLUDES += -I $(BSP)/CMSIS/Include -I $(BSP)/STM32F0xx_StdPeriph_Driver/inc
-INCLUDES += -I../ -include Application.h
+INCLUDES += -I. -include Application.h
 
 ####################################################################################
 # Target Gathering #################################################################
@@ -153,10 +153,10 @@ $(APPBIN)/$(EXE).elf: $(APPBIN)/$(EXE).ld $(BSP)/libstm32f0.a $(ALLOBJECTS)
 	@$(SIZE) $(APPBIN)/$(EXE).elf
 
 #application-specific .ld generation.  based on preproc defs in Application.h, such as the chip #define
-$(APPBIN)/$(EXE).ld: $(SRC)/Application.h $(LDSCRIPT_INC)/core.ld $(BSP)/libstm32f0.a $(ALLOBJECTS)
+$(APPBIN)/$(EXE).ld: Application.h $(LDSCRIPT_INC)/core.ld $(BSP)/libstm32f0.a $(ALLOBJECTS)
 	@mkdir -p bin
 	$(info Generating linker-directive file "$@" from preprocessor definitions...)
-	@$(CC) -I$(SRC) -P -E -x c $(LDSCRIPT_INC)/core.ld -o $(APPBIN)/$(EXE).ld
+	@$(CC) $(INCLUDES) -P -E -x c $(LDSCRIPT_INC)/core.ld -o $(APPBIN)/$(EXE).ld
 
 ###############################
 # Dependency Generation #######
