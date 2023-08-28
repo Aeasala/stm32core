@@ -1,18 +1,23 @@
 # By: Evan MacDonald
 # STM32 Core Template.
-# This makefile is intended for in-core compilation (requires a main function, which is no longer here by default)
 
 ####################################################################################
 ####################################################################################
 
-include config.mk
 # executable name: default is containing folder's name.
-EXE = $(APPNAME)
+ifdef APPNAME
+	EXE = $(APPNAME)
+else
+	EXE = $(shell basename $(CURDIR))
+endif
 
-# BSP and provided linker scripts
-BIN = bin
-OBJ = obj
-SRC = src
+# BSP and provided linker scripts.  APPBIN is app-level output folder. (end result goes out here)
+APPBIN = bin
+
+# Stuff within this folder.
+BIN = $(CORE)/bin
+OBJ = $(CORE)/obj
+SRC = $(CORE)/src
 BSP = $(SRC)/bsp
 LDSCRIPT_INC=$(SRC)/dev
 
@@ -50,7 +55,7 @@ CFLAGS += -Wl,--gc-sections
 LDFLAGS = $(FLAGS)
 LDFLAGS += $(CFLAGS)
 ifneq ($(MAKECMDGOALS),nomap)
-LDFLAGS += -Wl,-Map=$(BIN)/$(EXE).map -lm -Wl,--cref
+LDFLAGS += -Wl,-Map=$(APPBIN)/$(EXE).map -lm -Wl,--cref
 endif
 
 ####################################################################################
@@ -61,18 +66,20 @@ endif
 # Application.h contains preprocessor directives that are required.
 INCLUDES = -I $(BSP)/CMSIS/Device/ST/STM32F0xx/Include
 INCLUDES += -I $(BSP)/CMSIS/Include -I $(BSP)/STM32F0xx_StdPeriph_Driver/inc
-INCLUDES += -include $(SRC)/Application.h
+INCLUDES += -I../ -include Application.h
 
 ####################################################################################
 # Target Gathering #################################################################
 ####################################################################################
 
 # All files at the top level, i.e. ./src/*, will be compiled and linked.
-SOURCES := $(wildcard $(SRC)/dev/*.s $(SRC)/*.c)
-OBJECTS := \
+CORESOURCES := $(wildcard $(SRC)/dev/*.s $(SRC)/*.c)
+COREOBJECTS := \
 	$(patsubst $(SRC)/dev/%.s,$(SRC)/dev/%.o,$(wildcard $(SRC)/dev/*.s)) \
 	$(patsubst $(SRC)/%.c,$(SRC)/%.o,$(wildcard $(SRC)/*.c))
 
+ALLSOURCES := $(CORESOURCES) $(SOURCES)
+ALLOBJECTS := $(COREOBJECTS) $(OBJECTS)
 # Any additional folders to be compiled should be defined in "./src/subdir.mk".
 -include $(SRC)/subdir.mk
 
@@ -84,7 +91,7 @@ OBJECTS := \
 DEPFLAGS = -MM -MG -MT
 
 # Dependencies shall be named after their origin, placed in the same folder.
-DEPENDS := $(OBJECTS:.o=.d)
+DEPENDS := $(ALLOBJECTS:.o=.d)
 
 # dependencies want to get rebuilt on clean for some reason, bluntly ignore it
 ifneq ($(MAKECMDGOALS),clean)
@@ -107,8 +114,8 @@ DEPEND.c = $(CC) $(INCLUDES) $(FLAGS) $(CFLAGS) $(DEPFLAGS) $(@:.d=.o) $(@:.d=.c
 
 # compile C (or asm) source. -c is compile without linking
 COMPILE.c = $(CC) $(INCLUDES) $(FLAGS) $(CFLAGS) -c -o $@
-# link objects
-LINK.o = $(LD) $(INCLUDES) $(FLAGS) $(LDFLAGS) -o $@ -L$(BSP) -lstm32f0 -L$(BIN) -T$(EXE).ld
+# link objects.  need build-specific ld file
+LINK.o = $(LD) $(INCLUDES) $(FLAGS) $(LDFLAGS) -o $@ -L$(BSP) -lstm32f0 -L$(APPBIN) -T$(EXE).ld
 
 ####################################################################################
 # Goals and routines ###############################################################
@@ -116,7 +123,7 @@ LINK.o = $(LD) $(INCLUDES) $(FLAGS) $(LDFLAGS) -o $@ -L$(BSP) -lstm32f0 -L$(BIN)
 .DEFAULT_GOAL = all
 
 .PHONY: all nomap
-all nomap: $(BIN)/$(EXE).elf
+all nomap: $(APPBIN)/$(EXE).elf
 
 .PHONY: lib
 lib: $(BSP)/libstm32f0.a
@@ -128,26 +135,28 @@ $(BSP)/libstm32f0.a:
 
 # Conditions/requires to prevent out-of-order assembling.
 $(DEPENDS): $(BSP)/libstm32f0.a
-$(OBJECTS): $(BSP)/libstm32f0.a
+$(COREOBJECTS): $(BSP)/libstm32f0.a
 
 # Final goal: elf file.  Follows tree of needing .ld, library, and compiled objects.
-$(BIN)/$(EXE).elf: $(BIN)/$(EXE).ld $(BSP)/libstm32f0.a $(OBJECTS)
+$(APPBIN)/$(EXE).elf: $(APPBIN)/$(EXE).ld $(BSP)/libstm32f0.a $(ALLOBJECTS)
+	@mkdir -p bin
 	$(info Linking target "$@" using "$<"...)
-	@$(LINK.o) $(OBJECTS)
+	@$(LINK.o) $(ALLOBJECTS)
 	$(info Creating hex...)
-	@$(OBJCOPY) -O ihex $(BIN)/$(EXE).elf $(BIN)/$(EXE).hex
+	@$(OBJCOPY) -O ihex $(APPBIN)/$(EXE).elf $(APPBIN)/$(EXE).hex
 	$(info Creating bin...)
-	@$(OBJCOPY) -O binary $(BIN)/$(EXE).elf $(BIN)/$(EXE).bin
+	@$(OBJCOPY) -O binary $(APPBIN)/$(EXE).elf $(APPBIN)/$(EXE).bin
 	$(info Dumping symbol table...)
-	@$(OBJDUMP) -St $(BIN)/$(EXE).elf >$(BIN)/$(EXE).lst
+	@$(OBJDUMP) -St $(APPBIN)/$(EXE).elf >$(APPBIN)/$(EXE).lst
 	$(info ---------------------------------------)
 	$(info Done.  Executable size/composition:)
-	@$(SIZE) $(BIN)/$(EXE).elf
+	@$(SIZE) $(APPBIN)/$(EXE).elf
 
 #application-specific .ld generation.  based on preproc defs in Application.h, such as the chip #define
-$(BIN)/$(EXE).ld: $(SRC)/Application.h $(LDSCRIPT_INC)/core.ld $(BSP)/libstm32f0.a $(OBJECTS)
+$(APPBIN)/$(EXE).ld: $(SRC)/Application.h $(LDSCRIPT_INC)/core.ld $(BSP)/libstm32f0.a $(ALLOBJECTS)
+	@mkdir -p bin
 	$(info Generating linker-directive file "$@" from preprocessor definitions...)
-	@$(CC) -I$(SRC) -P -E -x c $(LDSCRIPT_INC)/core.ld -o $(BIN)/$(EXE).ld
+	@$(CC) -I$(SRC) -P -E -x c $(LDSCRIPT_INC)/core.ld -o $(APPBIN)/$(EXE).ld
 
 ###############################
 # Dependency Generation #######
@@ -202,24 +211,24 @@ $(BIN)/$(EXE).ld: $(SRC)/Application.h $(LDSCRIPT_INC)/core.ld $(BSP)/libstm32f0
 # force rebuild
 .PHONY: remake
 remake: clean
-	@$(MAKE) --no-print-directory $(BIN)/$(EXE).elf
+	@$(MAKE) --no-print-directory $(APPBIN)/$(EXE).elf
 
 # remove previous build and objects
 .PHONY: clean
 clean:
 	$(info Removing (.o)bject files...)
-	@$(RM) $(OBJECTS)
+	@$(RM) $(ALLOBJECTS)
 	$(info Removing (.d)ependencies...)
 	@$(RM) $(DEPENDS)
 	$(info Removing binaries/executables...)
-	@$(RM) $(BIN)/$(EXE)
-	@$(RM) $(BIN)/$(EXE).elf
-	@$(RM) $(BIN)/$(EXE).map
-	@$(RM) $(BIN)/$(EXE).bin
-	@$(RM) $(BIN)/$(EXE).hex
-	@$(RM) $(BIN)/$(EXE).lst
-	@$(RM) $(BIN)/$(EXE).dasm
-	@$(RM) $(BIN)/$(EXE).ld
+	@$(RM) $(APPBIN)/$(EXE)
+	@$(RM) $(APPBIN)/$(EXE).elf
+	@$(RM) $(APPBIN)/$(EXE).map
+	@$(RM) $(APPBIN)/$(EXE).bin
+	@$(RM) $(APPBIN)/$(EXE).hex
+	@$(RM) $(APPBIN)/$(EXE).lst
+	@$(RM) $(APPBIN)/$(EXE).dasm
+	@$(RM) $(APPBIN)/$(EXE).ld
 	@$(RM) $(OBJECTS:.o=.dasm)
 	@$(RM) $(BSP)/libstm32f0.dasm
 
@@ -230,12 +239,12 @@ cleanall: clean
 
 #disassemble the elf, or everything
 .PHONY: dasm
-dasm: $(BIN)/$(EXE).dasm
-	$(info Disassembling "$(BIN)/$(EXE).elf" to "$(BIN)/$(EXE).dasm")
-	@$(OBJDUMP) -d $(BIN)/$(EXE).elf > $(BIN)/$(EXE).dasm
+dasm: $(APPBIN)/$(EXE).dasm
+	$(info Disassembling "$(APPBIN)/$(EXE).elf" to "$(APPBIN)/$(EXE).dasm")
+	@$(OBJDUMP) -d $(APPBIN)/$(EXE).elf > $(APPBIN)/$(EXE).dasm
 
 .PHONY: dasmall
-dasmall: $(BIN)/$(EXE).dasm $(OBJECTS:.o=.dasm) $(BSP)/libstm32f0.dasm
+dasmall: $(APPBIN)/$(EXE).dasm $(OBJECTS:.o=.dasm) $(BSP)/libstm32f0.dasm
 	
 #what's on the menu?
 .PHONY: help
