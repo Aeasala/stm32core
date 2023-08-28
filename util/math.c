@@ -1,0 +1,20 @@
+//////////////
+/* Includes */
+#include "stm32core/util/math.h"
+////////////////////
+/* Private Macros */
+
+///////////////////
+/* Private Types */
+
+//////////////////
+/* Private Data */
+
+/////////////////////////////////
+/* Private Function Prototypes */
+
+/////////////////////////////////
+/* Public Function Definitions */
+
+//////////////////////////////////
+/* Private Function Definitions */

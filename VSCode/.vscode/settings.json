@@ -1,7 +1,7 @@
 {
     "files.associations": {
-        "stm32f0xx_conf.h": "c",
-        "stm32f0xx.h": "c"
+        "*.h": "c",
+        "*.c": "c"
     },
     "makefile.launchConfigurations": [
         {
