@@ -1,5 +1,6 @@
 # By: Evan MacDonald
 # STM32 Core Template.
+# This makefile is intended for in-core compilation (requires a main function, which is no longer here by default)
 
 ####################################################################################
 ####################################################################################

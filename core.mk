@@ -4,12 +4,17 @@
 ####################################################################################
 ####################################################################################
 
-include $(CORE)/config.mk
 # executable name: default is containing folder's name.
-EXE = $(APPNAME)
+ifdef APPNAME
+	EXE = $(APPNAME)
+else
+	EXE = $(shell basename $(CURDIR))
+endif
 
-# BSP and provided linker scripts
+# BSP and provided linker scripts.  APPBIN is app-level output folder. (end result goes out here)
 APPBIN = bin
+
+# Stuff within this folder.
 BIN = $(CORE)/bin
 OBJ = $(CORE)/obj
 SRC = $(CORE)/src
@@ -59,9 +64,9 @@ endif
 
 # The CMSIS and StdPeriph libraries are required.
 # Application.h contains preprocessor directives that are required.
-INCLUDES = -I../ -I $(BSP)/CMSIS/Device/ST/STM32F0xx/Include
+INCLUDES = -I $(BSP)/CMSIS/Device/ST/STM32F0xx/Include
 INCLUDES += -I $(BSP)/CMSIS/Include -I $(BSP)/STM32F0xx_StdPeriph_Driver/inc
-INCLUDES += -include $(SRC)/Application.h
+INCLUDES += -I../ -include Application.h
 
 ####################################################################################
 # Target Gathering #################################################################
@@ -73,6 +78,8 @@ COREOBJECTS := \
 	$(patsubst $(SRC)/dev/%.s,$(SRC)/dev/%.o,$(wildcard $(SRC)/dev/*.s)) \
 	$(patsubst $(SRC)/%.c,$(SRC)/%.o,$(wildcard $(SRC)/*.c))
 
+ALLSOURCES := $(CORESOURCES) $(SOURCES)
+ALLOBJECTS := $(COREOBJECTS) $(OBJECTS)
 # Any additional folders to be compiled should be defined in "./src/subdir.mk".
 -include $(SRC)/subdir.mk
 
@@ -84,7 +91,7 @@ COREOBJECTS := \
 DEPFLAGS = -MM -MG -MT
 
 # Dependencies shall be named after their origin, placed in the same folder.
-DEPENDS := $(OBJECTS:.o=.d) $(COREOBJECTS:.o=.d)
+DEPENDS := $(ALLOBJECTS:.o=.d)
 
 # dependencies want to get rebuilt on clean for some reason, bluntly ignore it
 ifneq ($(MAKECMDGOALS),clean)
@@ -107,7 +114,7 @@ DEPEND.c = $(CC) $(INCLUDES) $(FLAGS) $(CFLAGS) $(DEPFLAGS) $(@:.d=.o) $(@:.d=.c
 
 # compile C (or asm) source. -c is compile without linking
 COMPILE.c = $(CC) $(INCLUDES) $(FLAGS) $(CFLAGS) -c -o $@
-# link objects
+# link objects.  need build-specific ld file
 LINK.o = $(LD) $(INCLUDES) $(FLAGS) $(LDFLAGS) -o $@ -L$(BSP) -lstm32f0 -L$(APPBIN) -T$(EXE).ld
 
 ####################################################################################
@@ -131,10 +138,10 @@ $(DEPENDS): $(BSP)/libstm32f0.a
 $(COREOBJECTS): $(BSP)/libstm32f0.a
 
 # Final goal: elf file.  Follows tree of needing .ld, library, and compiled objects.
-$(APPBIN)/$(EXE).elf: $(APPBIN)/$(EXE).ld $(BSP)/libstm32f0.a $(OBJECTS) $(COREOBJECTS)
+$(APPBIN)/$(EXE).elf: $(APPBIN)/$(EXE).ld $(BSP)/libstm32f0.a $(ALLOBJECTS)
 	@mkdir -p bin
 	$(info Linking target "$@" using "$<"...)
-	@$(LINK.o) $(OBJECTS) $(COREOBJECTS)
+	@$(LINK.o) $(ALLOBJECTS)
 	$(info Creating hex...)
 	@$(OBJCOPY) -O ihex $(APPBIN)/$(EXE).elf $(APPBIN)/$(EXE).hex
 	$(info Creating bin...)
@@ -146,7 +153,7 @@ $(APPBIN)/$(EXE).elf: $(APPBIN)/$(EXE).ld $(BSP)/libstm32f0.a $(OBJECTS) $(COREO
 	@$(SIZE) $(APPBIN)/$(EXE).elf
 
 #application-specific .ld generation.  based on preproc defs in Application.h, such as the chip #define
-$(APPBIN)/$(EXE).ld: $(SRC)/Application.h $(LDSCRIPT_INC)/core.ld $(BSP)/libstm32f0.a $(OBJECTS) $(COREOBJECTS)
+$(APPBIN)/$(EXE).ld: $(SRC)/Application.h $(LDSCRIPT_INC)/core.ld $(BSP)/libstm32f0.a $(ALLOBJECTS)
 	@mkdir -p bin
 	$(info Generating linker-directive file "$@" from preprocessor definitions...)
 	@$(CC) -I$(SRC) -P -E -x c $(LDSCRIPT_INC)/core.ld -o $(APPBIN)/$(EXE).ld
@@ -210,7 +217,7 @@ remake: clean
 .PHONY: clean
 clean:
 	$(info Removing (.o)bject files...)
-	@$(RM) $(OBJECTS)
+	@$(RM) $(ALLOBJECTS)
 	$(info Removing (.d)ependencies...)
 	@$(RM) $(DEPENDS)
 	$(info Removing binaries/executables...)
