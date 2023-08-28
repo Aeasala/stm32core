@@ -1,29 +1,30 @@
-/*
-Common part of the linker scripts for STR71x devices in FLASH mode
-(that is, the FLASH is seen at 0)
-Copyright RAISONANCE 2005
-You can use, modify and distribute this file freely, but without any warranty.
-*/
-
+/* Preprocessor directives */
 #include "Application.h"
 
 /* Sections Definitions */
 
+/* Notes:
+Reset_Handler shall be the bootloader entry point for any additional chips defined here.
+*/
+
 #ifdef STM32F051
-ENTRY(Reset_Handler)
+	ENTRY(Reset_Handler)
+	MEMORY
+	{
+	  FLASH (rx) : ORIGIN = 0x08000000, LENGTH = 64K
+	  RAM  (xrw) : ORIGIN = 0x20000000, LENGTH = 8K
+	}
 
-MEMORY
-{
-  FLASH (rx) : ORIGIN = 0x08000000, LENGTH = 64K
-  RAM  (xrw) : ORIGIN = 0x20000000, LENGTH = 8K
-}
-
-/* highest address of the user mode stack */
-_estack = 0x20002000;
+	/* highest address of the user mode stack */
+	_estack = 0x20002000;
 #endif
 
 SECTIONS
 {
+	/* Notes:
+	32-bit alignment is required for addresses, i.e., 4-byte alignment (hence ALIGN(4) for address pointer '.')
+	*/
+	
     /* for Cortex devices, the beginning of the startup code is stored in the .isr_vector section, which goes to FLASH */
     .isr_vector :
     {

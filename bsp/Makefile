@@ -3,7 +3,7 @@ AR=arm-none-eabi-ar
 
 ###########################################
 
-include ../target.mk
+include ../coretarget.mk
 
 #vpath %.c STM32F0xx_StdPeriph_Driver/src
 
