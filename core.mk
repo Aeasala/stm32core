@@ -1,23 +1,21 @@
 # By: Evan MacDonald
 # STM32 Core Template.
+# Makefile in directory above defines $(CORE) as this folder.  working-directory is above.
 
 ####################################################################################
 ####################################################################################
 
-# executable name: default is containing folder's name.
-ifdef APPNAME
-	EXE = $(APPNAME)
-else
-	EXE = $(shell basename $(CURDIR))
-endif
+# executable name: default is containing folder's name. ?= sets a default if upper-level makefile didn't
+APPNAME ?= $(shell basename $(CURDIR))
+EXE = $(APPNAME)
 
-# BSP and provided linker scripts.  APPBIN is app-level output folder. (end result goes out here)
+# APPBIN is app-level output folder. (technically ../bin w.r.t. this file's path)
 APPBIN = bin
 
-# Stuff within this folder.
+# Stuff within this folder.  
 BIN = $(CORE)/bin
 BSP = $(CORE)/bsp
-LDSCRIPT_INC=$(CORE)/dev
+LDSCRIPT_INC = $(CORE)/dev
 
 ####################################################################################
 # Toolchain Aliases ################################################################
@@ -28,41 +26,43 @@ CC = arm-none-eabi-gcc
 # linker
 LD = arm-none-eabi-gcc
 #other utils
-OBJCOPY=arm-none-eabi-objcopy
-OBJDUMP=arm-none-eabi-objdump
-SIZE=arm-none-eabi-size
+OBJCOPY = arm-none-eabi-objcopy
+OBJDUMP = arm-none-eabi-objdump
+SIZE = arm-none-eabi-size
 
 ####################################################################################
 # Compiler and Linker flags ########################################################
 ####################################################################################
 
-include $(CORE)/coretarget.mk
-
 # Common to all.
 FLAGS :=
 
-# C flags. CFLAGS_TARG is chip-specific to the STM32.
-CFLAGS = $(FLAGS)
-CFLAGS += -Wall -g -std=c99 -Os  
+# defines chip architecture, e.g. cortex m0
+include $(CORE)/coretarget.mk
+
+# C flags. CFLAGS_TARG is chip-specific to the STM32, from coretarget.mk
+CFLAGS := $(FLAGS)
 CFLAGS += $(CFLAGS_TARG)
+CFLAGS += -Wall -g -std=c99 -Os  
 CFLAGS += -ffunction-sections -fdata-sections
 CFLAGS += -Wl,--gc-sections
 
 # Linker flags.  CFLAGS are tied-in.
-# Creates a .map of the program, unless the target specifies.
-LDFLAGS = $(FLAGS)
+LDFLAGS := $(FLAGS)
 LDFLAGS += $(CFLAGS)
+# are we also making a map?
 ifneq ($(MAKECMDGOALS),nomap)
-LDFLAGS += -Wl,-Map=$(APPBIN)/$(EXE).map -lm -Wl,--cref
+	LDFLAGS += -Wl,-Map=$(APPBIN)/$(EXE).map -lm -Wl,--cref
 endif
 
+# use libstm32f0.a if any references/functions needed from pre-included STM library
 ADDLIBS = -L$(BSP) -lstm32f0
 
 ####################################################################################
 # Path and File includes ###########################################################
 ####################################################################################
 
-# The CMSIS and StdPeriph libraries are required.
+# The CMSIS and StdPeriph headers are required.  any of their compiled objects will be pulled from ADDLIBS
 # Application.h contains preprocessor directives that are required.
 INCLUDES = -I $(BSP)/CMSIS/Device/ST/STM32F0xx/Include
 INCLUDES += -I $(BSP)/CMSIS/Include -I $(BSP)/STM32F0xx_StdPeriph_Driver/inc
@@ -72,62 +72,75 @@ INCLUDES += -I. -include Application.h
 # Target Gathering #################################################################
 ####################################################################################
 
-# All files at the top level, i.e. ./CORE/*, will be compiled and linked.
+# All files at the top level, including .s (typ. bootloader) in dev/
 CORESOURCES := $(wildcard $(CORE)/dev/*.s $(CORE)/*.c)
+# object files will neighbor sources, i.e. path stays same but becomes *.o
 COREOBJECTS := \
 	$(patsubst $(CORE)/dev/%.s,$(CORE)/dev/%.o,$(wildcard $(CORE)/dev/*.s)) \
 	$(patsubst $(CORE)/%.c,$(CORE)/%.o,$(wildcard $(CORE)/*.c))
 
+
 # Any additional folders to be compiled should be defined in "coremodules.mk".
-# This include call will append onto CORESOURCES, COREOBJECTS
--include $(CORE)/coremodules.mk
+include $(CORE)/coremodules.mk
+# This include call will append onto CORESOURCES, COREOBJECTS from the imported list above
 include $(patsubst %,$(CORE)/%/subdir.mk,$(COREMODULES))
 
-ALLSOURCES := $(CORESOURCES) $(SOURCES)
-ALLOBJECTS := $(COREOBJECTS) $(OBJECTS)
+# stitch together
+ALLSOURCES = $(CORESOURCES) $(SOURCES)
+ALLOBJECTS = $(COREOBJECTS) $(OBJECTS)
 
 ####################################################################################
 # Dependencies of Gathered Targets #################################################
 ####################################################################################
 
 # Flags to create dependencies from a provided source file list.
-DEPFLAGS = -MM -MG -MT
+DEPFLAGS := -MM -MG -MT
 
 # Dependencies shall be named after their origin, placed in the same folder.
-DEPENDS := $(ALLOBJECTS:.o=.d)
+DEPENDS = $(ALLOBJECTS:.o=.d)
 
 # dependencies want to get rebuilt on clean for some reason, bluntly ignore it
+# including the DEPENDS list will make our makefile super smart and recompile only what's needed
 ifneq ($(MAKECMDGOALS),clean)
-ifneq ($(MAKECMDGOALS),cleanall)
-ifneq ($(MAKECMDGOALS),lib)
-ifneq ($(MAKECMDGOALS),remake)
--include $(DEPENDS)
-endif
-endif
-endif
+	ifneq ($(MAKECMDGOALS),cleanall)
+		ifneq ($(MAKECMDGOALS),lib)
+			ifneq ($(MAKECMDGOALS),remake)
+			-include $(DEPENDS)
+			endif
+		endif
+	endif
 endif
 
 ####################################################################################
-# Methods to reach target goals ####################################################
+# Finally: Methods to reach target goals ###########################################
 ####################################################################################
 
-# create dependencies of C or asm file.  asm is non-functional, but here.
-DEPEND.s = $(CC) $(INCLUDES) $(FLAGS) $(CFLAGS) $(DEPFLAGS) $(@:.d=.o) $(@:.d=.s) 
-DEPEND.c = $(CC) $(INCLUDES) $(FLAGS) $(CFLAGS) $(DEPFLAGS) $(@:.d=.o) $(@:.d=.c) 
+# note: addlibs should come AFTER sources/objects on the COMPILE or LINK calls.
+# if included before, unresolved references (functions) will not be sought out.
+# ordering will resolve undefined refs on the left using remaining refs on the right
 
-# compile C (or asm) source. -c is compile without linking
-COMPILE.c = $(CC) $(INCLUDES) $(FLAGS) $(CFLAGS) -c -o $@ 
-# link objects.  need build-specific ld file
-LINK.o = $(LD) $(INCLUDES) $(FLAGS) $(LDFLAGS) -o $@ -L$(APPBIN) -T$(EXE).ld
+# create dependencies of a single C or asm file.  asm is non-functional, but here.
+DEPEND.c = $(CC) $(INCLUDES) $(CFLAGS) $(DEPFLAGS) 
+DEPEND.s = $(CC) $(INCLUDES) $(CFLAGS) $(DEPFLAGS)
+
+# compile a single C (or asm) source. -c is compile without linking
+COMPILE.c = $(CC) $(INCLUDES) $(CFLAGS) -c -o $@ 
+COMPILE.s = $(CC) $(INCLUDES) $(CFLAGS) -c -o $@ 
+
+# link a list of objects.  need build-specific ld file (found in APPBIN)
+LINK.o = $(LD) $(INCLUDES) $(LDFLAGS) -o $@ -L$(APPBIN) -T$(EXE).ld
 
 ####################################################################################
 # Goals and routines ###############################################################
 ####################################################################################
 .DEFAULT_GOAL = all
 
+# APPBIN/EXE.elf is the top-level output.  needed targets branch out from there.
 .PHONY: all nomap
 all nomap: $(APPBIN)/$(EXE).elf
 
+# (B) make the library
+# calls makefile in bsp/ directory
 .PHONY: lib
 lib: $(BSP)/libstm32f0.a
 $(BSP)/libstm32f0.a:
@@ -136,11 +149,12 @@ $(BSP)/libstm32f0.a:
 	@$(MAKE) --no-print-directory -C $(BSP)
 	@$(MAKE) --no-print-directory -C $(BSP) clean
 
-# Conditions/requires to prevent out-of-order assembling.
+# Conditions/requires to prevent out-of-order assembling.  lib must be able to compile successfully before our program.
 $(DEPENDS): $(BSP)/libstm32f0.a
-$(COREOBJECTS): $(BSP)/libstm32f0.a
+$(ALLOBJECTS): $(BSP)/libstm32f0.a
 
-# Final goal: elf file.  Follows tree of needing .ld, library, and compiled objects.
+########
+# Final goal: elf file.  needs processed (A) linker script, (B) lib, and (C) compiled objects
 $(APPBIN)/$(EXE).elf: $(APPBIN)/$(EXE).ld $(BSP)/libstm32f0.a $(ALLOBJECTS)
 	@mkdir -p bin
 	$(info Linking target "$@" using "$<"...)
@@ -155,8 +169,9 @@ $(APPBIN)/$(EXE).elf: $(APPBIN)/$(EXE).ld $(BSP)/libstm32f0.a $(ALLOBJECTS)
 	$(info Done.  Executable size/composition:)
 	@$(SIZE) $(APPBIN)/$(EXE).elf
 
-#application-specific .ld generation.  based on preproc defs in Application.h, such as the chip #define
-$(APPBIN)/$(EXE).ld: Application.h $(LDSCRIPT_INC)/core.ld $(BSP)/libstm32f0.a $(ALLOBJECTS)
+# (A) application-specific .ld generation.  based on preproc defs in Application.h, such as the chip #define
+# needs app.h preproc defs, raw linker script, (B) lib, and (C) compiled objects.
+$(APPBIN)/$(EXE).ld: Application.h $(LDSCRIPT_INC)/core.ld
 	@mkdir -p bin
 	$(info Generating linker-directive file "$@" from preprocessor definitions...)
 	@$(CC) $(INCLUDES) -P -E -x c $(LDSCRIPT_INC)/core.ld -o $(APPBIN)/$(EXE).ld
@@ -164,23 +179,30 @@ $(APPBIN)/$(EXE).ld: Application.h $(LDSCRIPT_INC)/core.ld $(BSP)/libstm32f0.a $
 ###############################
 # Dependency Generation #######
 ###############################
-%.d: %.s
-	$(info Rebuilding dependencies for $(@:.d=.s))
-	@$(DEPEND.s) $< > $@ $(ADDLIBS)
+# the sed call will also include the .d filename into the .d file
 
+# make dependencies for an asm .s file
+%.d: %.s
+	$(info Rebuilding dependencies for "$(@:.d=.s)")
+	@$(DEPEND.s) $(@:.d=.o) $< $(ADDLIBS) | sed "s,\(\)\.o[ :]*,\1.o $@ : ,g" > $@
+
+# make dependencies for a .c file
 %.d: %.c
-	$(info Rebuilding dependencies for $(@:.d=.c))
-	@$(DEPEND.c) $< > $@ $(ADDLIBS)
+	$(info Rebuilding dependencies for "$(@:.d=.c)")
+	@$(DEPEND.c) $(@:.d=.o) $< $(ADDLIBS) | sed "s,\(\)\.o[ :]*,\1.o $@ : ,g" > $@
 
 ###############################
 # Compiling ###################
 ###############################
+
+# (C) compile an asm .s file to an object
 %.o: %.s
 	$(info Compiling assembly file)
-	$(info ..... ./$(@:.o=.s) ==> ./$(@))
-	@$(COMPILE.c) $< $(ADDLIBS) 
+	$(info ..... "./$(@:.o=.s)" ==> "./$(@)")
+	@$(COMPILE.s) $< $(ADDLIBS) 
 	$(info )
 
+# (C) compile a .c file to an object
 %.o: %.c
 	$(info Compiling source file)
 	$(info ..... ./$(@:.o=.c) ==> ./$(@))
@@ -190,18 +212,22 @@ $(APPBIN)/$(EXE).ld: Application.h $(LDSCRIPT_INC)/core.ld $(BSP)/libstm32f0.a $
 ###############################
 # Disassembly #################
 ###############################
+
+# disassemble an elf executable
 %.dasm: %.elf
 	$(info Disassembling elf)
 	$(info ..... ./$(@:.elf=.dasm) ==> ./$(@))
 	@$(OBJDUMP) -d $(@:.dasm=.elf) > $@
 	$(info )
 
+# disassemble an object
 %.dasm: %.o
 	$(info Disassembling object)
 	$(info ..... ./$(@:.o=.dasm) ==> ./$(@))
 	@$(OBJDUMP) -d $(@:.dasm=.o) > $@
 	$(info )
 
+# disassemble a library
 %.dasm: %.a
 	$(info Disassembling library)
 	$(info ..... ./$(@:.a=.dasm) ==> ./$(@))
@@ -209,8 +235,9 @@ $(APPBIN)/$(EXE).ld: Application.h $(LDSCRIPT_INC)/core.ld $(BSP)/libstm32f0.a $
 	$(info )
 
 ###############################
-# Other goals #################
+# Other goals (utilities) #####
 ###############################
+
 # force rebuild
 .PHONY: remake
 remake: clean
@@ -230,14 +257,16 @@ clean:
 	@$(RM) $(APPBIN)/$(EXE).bin
 	@$(RM) $(APPBIN)/$(EXE).hex
 	@$(RM) $(APPBIN)/$(EXE).lst
-	@$(RM) $(APPBIN)/$(EXE).dasm
 	@$(RM) $(APPBIN)/$(EXE).ld
-	@$(RM) $(OBJECTS:.o=.dasm)
+	$(info Removing disassemblies...)
+	@$(RM) $(APPBIN)/$(EXE).dasm
+	@$(RM) $(ALLOBJECTS:.o=.dasm)
 	@$(RM) $(BSP)/libstm32f0.dasm
 
 #remove everything, including the lib file
 .PHONY: cleanall
 cleanall: clean
+	$(info Removing library...)
 	@$(MAKE) --no-print-directory -C $(BSP) cleanTrue
 
 #disassemble the elf, or everything
@@ -246,8 +275,9 @@ dasm: $(APPBIN)/$(EXE).dasm
 	$(info Disassembling "$(APPBIN)/$(EXE).elf" to "$(APPBIN)/$(EXE).dasm")
 	@$(OBJDUMP) -d $(APPBIN)/$(EXE).elf > $(APPBIN)/$(EXE).dasm
 
+# disassemble everything we know
 .PHONY: dasmall
-dasmall: $(APPBIN)/$(EXE).dasm $(OBJECTS:.o=.dasm) $(BSP)/libstm32f0.dasm
+dasmall: $(APPBIN)/$(EXE).dasm $(ALLOBJECTS:.o=.dasm) $(BSP)/libstm32f0.dasm
 	
 #what's on the menu?
 .PHONY: help
