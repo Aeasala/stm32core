@@ -2,7 +2,7 @@
 #define __util_buffer_h_
 //////////////
 /* Includes */
-#include "arm_math.h"
+
 ///////////////////
 /* Public Macros */
 
