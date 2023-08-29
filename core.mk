@@ -56,6 +56,8 @@ ifneq ($(MAKECMDGOALS),nomap)
 LDFLAGS += -Wl,-Map=$(APPBIN)/$(EXE).map -lm -Wl,--cref
 endif
 
+ADDLIBS = -L$(BSP) -lstm32f0
+
 ####################################################################################
 # Path and File includes ###########################################################
 ####################################################################################
@@ -114,9 +116,9 @@ DEPEND.s = $(CC) $(INCLUDES) $(FLAGS) $(CFLAGS) $(DEPFLAGS) $(@:.d=.o) $(@:.d=.s
 DEPEND.c = $(CC) $(INCLUDES) $(FLAGS) $(CFLAGS) $(DEPFLAGS) $(@:.d=.o) $(@:.d=.c) 
 
 # compile C (or asm) source. -c is compile without linking
-COMPILE.c = $(CC) $(INCLUDES) $(FLAGS) $(CFLAGS) -c -o $@
+COMPILE.c = $(CC) $(INCLUDES) $(FLAGS) $(CFLAGS) -c -o $@ 
 # link objects.  need build-specific ld file
-LINK.o = $(LD) $(INCLUDES) $(FLAGS) $(LDFLAGS) -o $@ -L$(BSP) -lstm32f0 -L$(APPBIN) -T$(EXE).ld
+LINK.o = $(LD) $(INCLUDES) $(FLAGS) $(LDFLAGS) -o $@ -L$(APPBIN) -T$(EXE).ld
 
 ####################################################################################
 # Goals and routines ###############################################################
@@ -142,7 +144,7 @@ $(COREOBJECTS): $(BSP)/libstm32f0.a
 $(APPBIN)/$(EXE).elf: $(APPBIN)/$(EXE).ld $(BSP)/libstm32f0.a $(ALLOBJECTS)
 	@mkdir -p bin
 	$(info Linking target "$@" using "$<"...)
-	@$(LINK.o) $(ALLOBJECTS)
+	@$(LINK.o) $(ALLOBJECTS) $(ADDLIBS)
 	$(info Creating hex...)
 	@$(OBJCOPY) -O ihex $(APPBIN)/$(EXE).elf $(APPBIN)/$(EXE).hex
 	$(info Creating bin...)
@@ -164,11 +166,11 @@ $(APPBIN)/$(EXE).ld: Application.h $(LDSCRIPT_INC)/core.ld $(BSP)/libstm32f0.a $
 ###############################
 %.d: %.s
 	$(info Rebuilding dependencies for $(@:.d=.s))
-	@$(DEPEND.s) $< > $@
+	@$(DEPEND.s) $< > $@ $(ADDLIBS)
 
 %.d: %.c
 	$(info Rebuilding dependencies for $(@:.d=.c))
-	@$(DEPEND.c) $< > $@
+	@$(DEPEND.c) $< > $@ $(ADDLIBS)
 
 ###############################
 # Compiling ###################
@@ -176,13 +178,13 @@ $(APPBIN)/$(EXE).ld: Application.h $(LDSCRIPT_INC)/core.ld $(BSP)/libstm32f0.a $
 %.o: %.s
 	$(info Compiling assembly file)
 	$(info ..... ./$(@:.o=.s) ==> ./$(@))
-	@$(COMPILE.c) $< 
+	@$(COMPILE.c) $< $(ADDLIBS) 
 	$(info )
 
 %.o: %.c
 	$(info Compiling source file)
 	$(info ..... ./$(@:.o=.c) ==> ./$(@))
-	@$(COMPILE.c) $< 
+	@$(COMPILE.c) $< $(ADDLIBS) 
 	$(info )
 
 ###############################

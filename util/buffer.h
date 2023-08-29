@@ -2,8 +2,7 @@
 #define __util_buffer_h_
 //////////////
 /* Includes */
-#include "stm32core/stm32f0xx_conf.h"
-#include "stm32core/util/math.h"
+#include "arm_math.h"
 ///////////////////
 /* Public Macros */
 
