@@ -20,3 +20,4 @@ SVD
 /src/dev/*.dasm
 /src/*.d
 /src/*.dasm
+*.d
